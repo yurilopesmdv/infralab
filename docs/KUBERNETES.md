@@ -1,5 +1,7 @@
 # Kubernetes local, passo a passo
 
+Este documento registra a aula inicial com SQLite. O manifest backend atual já usa PostgreSQL, RollingUpdate e HPA; os comandos e resultados SQLite abaixo são históricos e não devem ser reaplicados indiscriminadamente no cluster migrado. Para reprodução sequencial com os arquivos atuais, use [o guia de implementação](../guias/implementacao/README.md).
+
 **Status: frontend, backend e persistência implantados e validados.** O usuário criou o cluster, aplicou os manifests e testou a aplicação no navegador durante as aulas. Primeiro valide o [guia de Docker](DOCKER.md).
 
 Ambiente validado: WSL 3.0.3.0, Docker Engine 29.8.2 com cgroup v2, kind 0.33.0 e Kubernetes/kubectl 1.35.8. A falha inicial foi diagnosticada nos logs do kubelet: cgroup v1 impedia sua inicialização. Após atualizar WSL e reiniciar Docker, o cluster incompleto foi removido e recriado pelo usuário.

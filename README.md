@@ -173,4 +173,6 @@ A readiness retorna HTTP 503 se o banco selecionado estiver indisponível. Liven
 
 Leia [AGENTS.md](AGENTS.md) e [o roadmap](docs/ROADMAP.md).
 
+Para reconstruir o laboratório e entender as conexões entre componentes, siga [os dez capítulos sequenciais de implementação](guias/implementacao/README.md), com comandos, exemplos de código/YAML e validação. O capítulo de carga registra o reteste pendente da configuração final.
+
 Para aprender a configurar cada arquivo e validar cada conceito, siga [o guia prático de Docker](docs/DOCKER.md) e [o guia Kubernetes](docs/KUBERNETES.md), com frontend, backend e persistência validados.
