@@ -15,4 +15,4 @@ A aplicação via Compose está validada. A API usa HTTP nativo do Node.js, sem 
 
 Módulo 5 validado: cluster kind, imagens carregadas, Namespace, Deployments, probes, recursos, Services, PVC e ConfigMap Nginx. A persistência foi confirmada após substituir o Pod, e o fluxo completo foi testado no navegador via port-forward do frontend.
 
-Módulo 6 em andamento: PostgreSQL com StatefulSet/PVC e conexão SQL/persistência validados pelo usuário. API 0.2.0, Job de cópia e testes de migração preparados; execução da migração e troca da API no cluster ainda pendentes. Dez réplicas, HPA, carga e observabilidade continuam futuros. Veja docs/POSTGRESQL.md.
+Módulo 6 em andamento: PostgreSQL com StatefulSet/PVC e conexão SQL/persistência validados pelo usuário. API 0.2.1, Job de cópia e testes de migração preparados; execução da migração e troca da API no cluster ainda pendentes. Dez réplicas, HPA, carga e observabilidade continuam futuros. Veja docs/POSTGRESQL.md.

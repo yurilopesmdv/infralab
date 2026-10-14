@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
-import { resolve } from 'node:path';
+import { copyFileSync, existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Pool } from 'pg';
 import { createPool, tasksSchema } from './postgres.js';
@@ -8,20 +10,30 @@ import type { Task } from './store.js';
 const migrationName = 'sqlite-tasks-v1';
 export class MigrationError extends Error {}
 
-export async function migrateSqlite(path: string, pool: Pool) {
+async function readSnapshot(path: string): Promise<Task[]> {
   const { DatabaseSync } = await import('node:sqlite');
-  // readOnly impede criar um banco inexistente ou modificar a origem.
-  const source = new DatabaseSync(path, { readOnly: true });
-  let tasks: Task[];
+  // A origem precisa estar sem escritores. WAL pode exigir arquivos auxiliares
+  // mesmo em readOnly: criá-los apenas na cópia temporária, nunca no PVC original.
+  const directory = mkdtempSync(join(tmpdir(), 'infralab-sqlite-snapshot-'));
   try {
-    tasks = source.prepare('SELECT id, title, done FROM tasks ORDER BY id').all() as Task[];
-    for (const task of tasks) {
-      if (!Number.isInteger(task.id) || task.id < 1 || task.id > 2_147_483_647 ||
-          typeof task.title !== 'string' || ![0, 1].includes(task.done)) {
-        throw new MigrationError('Origem contém uma tarefa incompatível. Migração cancelada.');
-      }
+    const snapshot = join(directory, 'tasks.db');
+    copyFileSync(path, snapshot);
+    if (existsSync(`${path}-wal`)) copyFileSync(`${path}-wal`, `${snapshot}-wal`);
+    // O índice -shm é reconstruído no diretório temporário, que permite escrita.
+    const source = new DatabaseSync(snapshot, { readOnly: true });
+    try { return source.prepare('SELECT id, title, done FROM tasks ORDER BY id').all() as Task[]; }
+    finally { source.close(); }
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+}
+
+export async function migrateSqlite(path: string, pool: Pool) {
+  const tasks = await readSnapshot(path);
+  for (const task of tasks) {
+    if (!Number.isInteger(task.id) || task.id < 1 || task.id > 2_147_483_647 ||
+        typeof task.title !== 'string' || ![0, 1].includes(task.done)) {
+      throw new MigrationError('Origem contém uma tarefa incompatível. Migração cancelada.');
     }
-  } finally { source.close(); }
+  }
   const hash = createHash('sha256').update(JSON.stringify(tasks)).digest('hex');
   const client = await pool.connect();
   try {
@@ -64,7 +76,8 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const result = await migrateSqlite(process.env.SQLITE_PATH ?? '/source/tasks.db', pool);
     console.log(JSON.stringify({ level: 'info', ...result }));
   } catch (error) {
-    console.error(JSON.stringify({ level: 'error', message: error instanceof MigrationError ? error.message : 'Migração falhou; verifique origem e conexão PostgreSQL.' }));
+    const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined;
+    console.error(JSON.stringify({ level: 'error', code, message: error instanceof MigrationError ? error.message : 'Migração falhou; verifique origem e conexão PostgreSQL.' }));
     process.exitCode = 1;
   } finally { await pool.end(); }
 }

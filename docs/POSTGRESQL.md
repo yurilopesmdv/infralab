@@ -2,7 +2,7 @@
 
 ## Estado desta etapa
 
-O usuário implantou PostgreSQL 17.11 com Service headless, StatefulSet e PVC próprios. Conexão autenticada, SQL e persistência após substituição do Pod foram validados. A imagem da API 0.2.0 e o Job de migração estão preparados e testados em Docker isolado. **A cópia das tarefas e a troca da API no cluster ainda dependem da execução dos passos abaixo pelo usuário.** Não escalar a API antes de validar a migração.
+O usuário implantou PostgreSQL 17.11 com Service headless, StatefulSet e PVC próprios. Conexão autenticada, SQL e persistência após substituição do Pod foram validados. A imagem da API 0.2.1 e o Job de migração estão preparados e testados em Docker isolado. **A cópia das tarefas e a troca da API no cluster ainda dependem da execução dos passos abaixo pelo usuário.** Não escalar a API antes de validar a migração.
 
 O Compose principal continua com SQLite. Os bancos Compose, SQLite Kubernetes e PostgreSQL Kubernetes são distintos. Só o SQLite Kubernetes será copiado por este Job.
 
@@ -15,7 +15,7 @@ O Compose principal continua com SQLite. Os bancos Compose, SQLite Kubernetes e 
 | `backend/src/server.ts` | Aguarda consultas assíncronas e usa readiness do banco selecionado |
 | `backend/src/migrate-sqlite.ts` | Cópia verificada em transação, preservando origem e IDs |
 | `k8s/migrations/sqlite-to-postgres-job.yaml` | Executa a cópia uma vez, com SQLite somente leitura |
-| `k8s/backend-deployment.yaml` | API 0.2.0 usando PostgreSQL e Secret |
+| `k8s/backend-deployment.yaml` | API 0.2.1 usando PostgreSQL e Secret |
 | `k8s/legacy/backend-sqlite-deployment.yaml` | Referência da configuração anterior, sem aplicação automática |
 
 O driver `pg` usa variáveis `PGHOST`, `PGPORT`, `PGUSER`, `PGDATABASE` e `PGPASSWORD`. As credenciais vêm do Secret `postgres-credentials`; a senha não está em nenhum manifest. Consultas com `$1`, `$2` separam valores do texto SQL. As operações de atualização/exclusão são atômicas no PostgreSQL, sem uma consulta prévia de existência.
@@ -49,12 +49,12 @@ Não recrie um Secret já existente. Alterar a senha no Secret não altera autom
 ## 1. Construir e carregar a nova imagem
 
 ```bash
-docker build --target runtime -t infralab-backend:0.2.0 backend
-kind load docker-image infralab-backend:0.2.0 --name infralab
+docker build --target runtime -t infralab-backend:0.2.1 backend
+kind load docker-image infralab-backend:0.2.1 --name infralab
 docker exec infralab-control-plane crictl images
 ```
 
-`--target runtime` escolhe a etapa de execução, sem incluir os testes. Não substituímos a tag 0.1.0. A nova imagem contém o driver `pg` e o comando de migração compilado. Confira a tag 0.2.0 no nó.
+`--target runtime` escolhe a etapa de execução, sem incluir os testes. Não substituímos a tag 0.1.0. A nova imagem contém o driver `pg` e o comando de migração compilado. Confira a tag 0.2.1 no nó.
 
 ## 2. Validar o Job antes de interromper a API
 
@@ -75,17 +75,17 @@ kubectl --context kind-infralab wait --for=delete pod -l app=backend -n infralab
 kubectl --context kind-infralab get pods -n infralab -l app=backend
 ```
 
-Esperado: nenhum Pod da API. O PVC permanece. Isso impede novas escritas na origem durante a cópia. Não aplique ainda o Deployment 0.2.0 nem volte a iniciar a API SQLite enquanto a migração roda.
+Esperado: nenhum Pod da API. O PVC permanece. Isso impede novas escritas na origem durante a cópia. Não aplique ainda o Deployment 0.2.1 nem volte a iniciar a API SQLite enquanto a migração roda.
 
 ## 4. Executar a cópia em Job
 
 ```bash
 kubectl --context kind-infralab apply -f k8s/migrations/sqlite-to-postgres-job.yaml
-kubectl --context kind-infralab wait --for=condition=complete job/sqlite-to-postgres -n infralab --timeout=300s
-kubectl --context kind-infralab logs job/sqlite-to-postgres -n infralab
+kubectl --context kind-infralab wait --for=condition=complete job/sqlite-to-postgres-v2 -n infralab --timeout=300s
+kubectl --context kind-infralab logs job/sqlite-to-postgres-v2 -n infralab
 ```
 
-Job é um recurso para uma tarefa finita: ao terminar, o processo sai. Diferente do Deployment, não mantém a API rodando. `backoffLimit: 0` evita retentativas automáticas antes de investigar erros. O arquivo de origem está montado somente leitura e o programa também abre SQLite em modo readOnly.
+Job é um recurso para uma tarefa finita: ao terminar, o processo sai. Diferente do Deployment, não mantém a API rodando. `backoffLimit: 0` evita retentativas automáticas antes de investigar erros. A origem está montada somente leitura. O programa copia o banco e seu WAL, caso exista, para um diretório temporário, e abre essa cópia em modo readOnly. Arquivos auxiliares necessários ao SQLite são criados apenas no diretório temporário, removido ao terminar.
 
 Esperado nos logs: `status: migrated` e a quantidade de tarefas. O programa:
 
@@ -139,6 +139,10 @@ A tabela `infralab_persistence_check` da aula não é alterada pela migração. 
 ## Recuperação e limites
 
 ### Diagnosticar uma falha sem repetir a cópia
+
+A execução original com a imagem 0.2.0 falhou ao abrir `tasks.db` num volume somente leitura. O diagnóstico confirmou permissões de leitura para UID 1000, banco em modo WAL e ausência de arquivos auxiliares. A conexão ao PostgreSQL funcionou e a tabela tasks não havia sido criada. A condição WAL foi reproduzida em testes: uma conexão readOnly pode precisar criar arquivos auxiliares. A versão 0.2.1 trabalha sobre uma cópia temporária, preservando o PVC original. Há testes tanto para WAL fechado em diretório sem escrita quanto para registros ainda no arquivo WAL. Referência: [SQLite WAL em bancos somente leitura](https://www.sqlite.org/wal.html#read_only_databases).
+
+O novo manifest cria o Job `sqlite-to-postgres-v2` com a imagem 0.2.1, preservando o Job anterior e seus logs. Construa e carregue essa imagem antes da nova tentativa. Não aplique a nova API antes de confirmar a cópia.
 
 Se o Job retornar a mensagem genérica de falha, mantenha a API parada e preserve os volumes. O Pod opcional `k8s/diagnostics/migration-check-pod.yaml` usa a imagem 0.2.0, as referências do Secret e o SQLite somente leitura. Ele consulta a origem e executa SELECT no PostgreSQL, sem migrar dados nem imprimir senha ou títulos das tarefas.
 

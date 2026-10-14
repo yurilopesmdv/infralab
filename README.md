@@ -118,7 +118,7 @@ O banco Kubernetes é separado do Compose. O armazenamento local do kind não ga
 
 ### Migração PostgreSQL preparada
 
-PostgreSQL já foi implantado e teve conexão SQL e persistência validadas pelo usuário. A API 0.2.0 suporta PostgreSQL com o driver `pg`, e há um Job para copiar as tarefas do SQLite preservando IDs, estados e origem. O código foi testado em ambiente Docker isolado; a execução do Job e a troca da API no cluster continuam pendentes. **Não aplique o Deployment atualizado antes de copiar os dados.** Siga [o guia de migração PostgreSQL](docs/POSTGRESQL.md).
+PostgreSQL já foi implantado e teve conexão SQL e persistência validadas pelo usuário. A API 0.2.1 suporta PostgreSQL com o driver `pg`, e há um Job para copiar as tarefas do SQLite preservando IDs, estados e origem. O código foi testado em ambiente Docker isolado; a execução do Job e a troca da API no cluster continuam pendentes. **Não aplique o Deployment atualizado antes de copiar os dados.** Siga [o guia de migração PostgreSQL](docs/POSTGRESQL.md).
 
 O Compose principal permanece com SQLite, selecionado por padrão. Para testar PostgreSQL sem alterar o cluster ou esse Compose: `bash scripts/test-postgres.sh`. HPA, dez réplicas e observabilidade ainda não foram implementados.
 
@@ -129,7 +129,7 @@ Este laboratório publica HTTP somente em `127.0.0.1`, não tem autenticação e
 Etapas futuras, ainda não implementadas:
 
 1. **Evoluir o acesso Kubernetes:** hoje usamos port-forward temporário; acesso HTTP por um controlador será uma etapa separada, se autorizada.
-2. **Concluir migração PostgreSQL no cluster:** executar o Job de cópia e validar a API 0.2.0, antes de escalar escrita. Não compartilhar SQLite entre vários Pods como solução de escalabilidade.
+2. **Concluir migração PostgreSQL no cluster:** executar o Job de cópia e validar a API 0.2.1, antes de escalar escrita. Não compartilhar SQLite entre vários Pods como solução de escalabilidade.
 3. **Escalabilidade:** réplicas, HPA e testes de carga após a migração.
 4. **Monitoramento:** métricas HTTP, latência e taxa de erros via Prometheus; dashboards e alertas no Grafana.
 5. **Observabilidade:** centralizar logs JSON e correlacionar request IDs entre serviços, com Loki. Ainda não há Prometheus, Grafana ou Loki nesta etapa.

@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: sqlite-to-postgres
+  name: sqlite-to-postgres-v2
   namespace: infralab
 spec:
   backoffLimit: 0
@@ -16,7 +16,7 @@ spec:
         runAsGroup: 1000
       containers:
         - name: migrate
-          image: infralab-backend:0.2.0
+          image: infralab-backend:0.2.1
           imagePullPolicy: Never
           command: [node, dist/migrate-sqlite.js]
           env:

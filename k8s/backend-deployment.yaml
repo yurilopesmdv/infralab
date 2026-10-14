@@ -22,7 +22,7 @@ spec:
         runAsGroup: 1000
       containers:
       - name: backend
-        image: infralab-backend:0.2.0
+        image: infralab-backend:0.2.1
         imagePullPolicy: Never
         ports:
          - name: http

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, readFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, rmSync, readFileSync, existsSync, chmodSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
@@ -72,6 +72,48 @@ test('migração PostgreSQL preserva dados, controla repetição e reverte falha
       assert.equal(existsSync(absent), false);
       await assert.rejects(migrateSqlite(fixture([{ id: 1, title: 'inválida', done: 2 }]), pool), /incompatível/);
       assert.equal((await pool.query('SELECT count(*)::int AS count FROM tasks')).rows[0].count, 1);
+    });
+    await t.test('WAL fechado em diretório somente leitura é copiado sem alterar a origem', async () => {
+      await reset();
+      const readonlyDir = mkdtempSync(join(dir, 'wal-readonly-'));
+      const path = join(readonlyDir, 'tasks.db');
+      const source = new DatabaseSync(path);
+      source.exec("PRAGMA journal_mode=WAL; CREATE TABLE tasks(id INTEGER PRIMARY KEY, title TEXT, done INTEGER); INSERT INTO tasks VALUES(1, 'WAL preservado', 1)");
+      source.close();
+      const original = readFileSync(path);
+      assert.deepEqual(readdirSync(readonlyDir), ['tasks.db']);
+      chmodSync(path, 0o444);
+      chmodSync(readonlyDir, 0o555);
+      try {
+        assert.throws(() => {
+          const direct = new DatabaseSync(path, { readOnly: true });
+          try { direct.prepare('SELECT * FROM tasks').all(); }
+          finally { direct.close(); }
+        }, { code: 'ERR_SQLITE_ERROR' });
+        assert.deepEqual(await migrateSqlite(path, pool), { status: 'migrated', tasks: 1 });
+        assert.deepEqual((await pool.query('SELECT id, title, done FROM tasks')).rows, [{ id: 1, title: 'WAL preservado', done: 1 }]);
+        assert.deepEqual(readFileSync(path), original);
+        assert.deepEqual(readdirSync(readonlyDir), ['tasks.db']);
+      } finally {
+        chmodSync(readonlyDir, 0o700);
+        chmodSync(path, 0o600);
+      }
+    });
+    await t.test('copia também transações ainda presentes no arquivo WAL', async () => {
+      await reset();
+      const path = join(dir, 'uncheckpointed.db');
+      const source = new DatabaseSync(path);
+      try {
+        source.exec("PRAGMA journal_mode=WAL; PRAGMA wal_autocheckpoint=0; CREATE TABLE tasks(id INTEGER PRIMARY KEY, title TEXT, done INTEGER); INSERT INTO tasks VALUES(23, 'registro no WAL', 0)");
+        assert.equal(existsSync(`${path}-wal`), true);
+        const original = readFileSync(path);
+        const wal = readFileSync(`${path}-wal`);
+        assert.ok(wal.length > 0);
+        assert.deepEqual(await migrateSqlite(path, pool), { status: 'migrated', tasks: 1 });
+        assert.deepEqual((await pool.query('SELECT id, title, done FROM tasks')).rows, [{ id: 23, title: 'registro no WAL', done: 0 }]);
+        assert.deepEqual(readFileSync(path), original);
+        assert.deepEqual(readFileSync(`${path}-wal`), wal);
+      } finally { source.close(); }
     });
   } finally {
     await pool.end();
