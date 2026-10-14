@@ -11,4 +11,6 @@
 
 Cada módulo deve ter comandos, explicações, validação e commit Git em branch própria, seguindo Conventional Commits e a identidade configurada pelo usuário. Push e merge dependem de autorização.
 
-A etapa atual combina os fundamentos necessários de Docker com a aplicação mínima via Compose. A API usa HTTP nativo do Node.js, sem Express, para reduzir dependências. Kubernetes, PostgreSQL e observabilidade serão implementados após validar esta base.
+A aplicação via Compose está validada. A API usa HTTP nativo do Node.js, sem Express, para reduzir dependências.
+
+Módulo 5 em andamento: cluster kind, imagens carregadas, Namespace, Deployment do backend com probes e recursos, Service e PVC validados. A persistência foi confirmada após substituir o Pod. Restam frontend e ConfigMap; PostgreSQL e observabilidade continuam futuros.

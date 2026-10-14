@@ -99,13 +99,26 @@ docker compose up -d --wait
 
 Os Dockerfiles copiam as dependências antes do código: alterações no código podem reutilizar a camada de `npm ci`. Os lockfiles fixam a resolução das dependências. As imagens base usam versões explícitas; atualizações de segurança devem ser feitas e testadas deliberadamente. As imagens finais não incluem compiladores nem dependências de desenvolvimento.
 
+## Backend no Kubernetes local
+
+O backend já foi implantado no cluster kind `infralab`, com uma réplica, Deployment `Recreate`, PVC `sqlite-data`, Service interno, probes e limites de recursos. Os manifests estão em `k8s/`. A saúde da API e a criação de tarefas foram validadas; a tarefa permaneceu após substituir o Pod.
+
+```bash
+kubectl --context kind-infralab get pods,pvc,services -n infralab
+kubectl --context kind-infralab port-forward -n infralab service/backend 3001:3000
+```
+
+No segundo terminal: `curl --fail -sS http://localhost:3001/api/health/ready`. O encaminhamento permanece aberto até `Ctrl+C`.
+
+O banco Kubernetes é separado do Compose. O armazenamento local do kind não garante persistência após excluir o cluster. Frontend Kubernetes e observabilidade ainda estão pendentes. Consulte [o guia Kubernetes](docs/KUBERNETES.md).
+
 ## Evolução e limites
 
 Este laboratório publica HTTP somente em `127.0.0.1`, não tem autenticação e usa uma única instância da API. O SQLite síncrono mantém o exemplo pequeno. Não é uma configuração pronta para exposição pública.
 
 Etapas futuras, ainda não implementadas:
 
-1. **Kubernetes com kind:** Deployments, Services, armazenamento persistente, readiness/liveness probes e resource requests/limits. Inicialmente, uma réplica da API.
+1. **Completar Kubernetes com kind:** frontend e ConfigMap Nginx; backend, Service, PVC e probes já estão implementados.
 2. **PostgreSQL:** migrar antes de escalar escrita para múltiplas réplicas. Não compartilhar SQLite entre vários Pods como solução de escalabilidade.
 3. **Escalabilidade:** réplicas, HPA e testes de carga após a migração.
 4. **Monitoramento:** métricas HTTP, latência e taxa de erros via Prometheus; dashboards e alertas no Grafana.
@@ -118,8 +131,8 @@ Em produção também precisaremos de TLS, autenticação, gestão de segredos, 
 
 | Endpoint | Verificação | Uso |
 |---|---|---|
-| `/api/health/live` | Processo HTTP responde | Futura liveness probe |
-| `/api/health/ready` | Processo responde e consulta SQLite | Health check Docker e futura readiness probe |
+| `/api/health/live` | Processo HTTP responde | Liveness probe Kubernetes |
+| `/api/health/ready` | Processo responde e consulta SQLite | Health check Docker e readiness probe Kubernetes |
 | `/api/health` | Alias de readiness | Diagnóstico manual |
 | `/health` no frontend | Nginx responde | Health check do frontend |
 
@@ -134,4 +147,4 @@ A readiness retorna HTTP 503 se o banco estiver indisponível. Liveness não dep
 
 Leia [AGENTS.md](AGENTS.md) e [o roadmap](docs/ROADMAP.md).
 
-Para aprender a configurar cada arquivo e validar cada conceito, siga [o guia prático de Docker](docs/DOCKER.md). A [sequência de Kubernetes](docs/KUBERNETES.md) descreve a próxima etapa, ainda não implementada.
+Para aprender a configurar cada arquivo e validar cada conceito, siga [o guia prático de Docker](docs/DOCKER.md) e [o guia Kubernetes](docs/KUBERNETES.md), com o backend validado e a sequência futura do frontend.
