@@ -1,10 +1,35 @@
-# VS Code + WSL + Codex
+# VS Code e Ubuntu WSL
 
-1. Instale as extensões oficiais **WSL (Microsoft)**, **Codex (OpenAI)**, **Docker (Microsoft)** e **YAML (Red Hat)**. Kubernetes (Microsoft) e ESLint ficam para depois.
-2. No Docker Desktop, habilite Settings → Resources → WSL Integration → Ubuntu.
-3. Abra o Ubuntu e execute `mkdir -p ~/projects/infralab && cd ~/projects/infralab && code .`.
-4. Confira `WSL: Ubuntu` no canto inferior esquerdo do VS Code.
-5. No painel Codex, faça login com sua conta ChatGPT. O login ChatGPT não exige chave da API; limites do plano podem se aplicar.
-6. Execute `bash scripts/check-environment.sh`.
-7. No Codex: `Leia AGENTS.md e docs/ROADMAP.md. Faça somente o módulo 1, explicando e testando cada passo.`
-8. Para GitHub: crie repositório vazio e execute `git init`, `git add .`, `git commit -m "chore: initialize infralab"`, `git branch -M main`, `git remote add origin URL_DO_REPOSITORIO`, `git push -u origin main`.
+## Objetivo
+
+Editar arquivos no filesystem Linux e executar os comandos no terminal Ubuntu. Docker Desktop deve estar em execução e integrado à distribuição WSL usada pelo projeto. VS Code é opcional para executar a aplicação.
+
+## Abrir o repositório existente
+
+No terminal Ubuntu:
+
+```bash
+cd ~/projects/infralab
+code .
+```
+
+Se usar VS Code com integração WSL, confira a indicação da distribuição no canto inferior esquerdo e abra um terminal Bash. Comandos PowerShell pertencem ao terminal PowerShell; pelo Bash, precisam ser invocados explicitamente com `powershell.exe`.
+
+## Conferir sem instalar ou alterar
+
+```bash
+bash scripts/check-environment.sh
+docker version
+docker compose version
+git status
+kubectl version --client
+kind version
+```
+
+Docker deve mostrar cliente e servidor. Se o servidor não responder, confira Docker Desktop e sua integração com a distribuição antes de mudar arquivos do projeto. Instalações e ajustes globais são etapas separadas.
+
+## Fluxo de trabalho
+
+Leia [as regras do projeto](../AGENTS.md) e [o roadmap](ROADMAP.md). Use branch por funcionalidade, confira o diff e faça commit após validar o escopo. A identidade Git já está configurada; não altere configuração global. O repositório já está inicializado: não repita comandos de criação, renomeação de branch ou cadastro de remote.
+
+Push e merge devem ser ações autorizadas. Ao retomar trabalho, confira a branch atual e as pendências antes de executar alterações. Para aprender o ambiente em sequência, siga [o capítulo 01](../guias/implementacao/01-ambiente.md).

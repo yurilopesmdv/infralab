@@ -4,6 +4,7 @@ Execute comandos na raiz do repositório, no Ubuntu WSL. Estes capítulos explic
 
 | Ordem | Capítulo | Resultado |
 |---|---|---|
+| 00 | [Visão geral e glossário](00-visao-geral-e-glossario.md) | Camadas, recursos, tipos e conexões compreendidos |
 | 01 | [Ambiente](01-ambiente.md) | Docker e cluster acessíveis |
 | 02 | [API e SQLite](02-api-sqlite.md) | Contrato HTTP e persistência compreendidos |
 | 03 | [Frontend e Nginx](03-frontend-nginx.md) | Navegador conectado à API |

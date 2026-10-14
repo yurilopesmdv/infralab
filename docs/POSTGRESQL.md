@@ -2,7 +2,7 @@
 
 ## Estado desta etapa
 
-O usuário implantou PostgreSQL 17.11 com Service headless, StatefulSet e PVC próprios. Conexão autenticada, SQL e persistência após substituição do Pod foram validados. Com autorização explícita para execução pelo assistente, o Job `sqlite-to-postgres-v2` concluiu a migração de uma tarefa e a API 0.2.1 foi implantada. Readiness retornou `database: postgres`; o frontend listou a tarefa original e três testes HTTP passaram no cluster. Treze testes isolados também passaram. **A migração está concluída; os passos abaixo documentam como reproduzi-la em outro ambiente.** Escala e HPA foram estudados posteriormente; veja [o capítulo de escala](ESCALABILIDADE.md).
+PostgreSQL 17.11 foi implantado com Service headless, StatefulSet e PVC próprios. Conexão autenticada, SQL e persistência após substituição do Pod foram validados. O Job `sqlite-to-postgres-v2` concluiu a migração de uma tarefa e a API 0.2.1 foi implantada. Readiness retornou `database: postgres`; o frontend listou a tarefa original e três testes HTTP passaram no cluster. Treze testes isolados também passaram. **A migração está concluída; os passos abaixo documentam como reproduzi-la em outro ambiente.** Escala e HPA foram estudados posteriormente; veja [o capítulo de escala](ESCALABILIDADE.md).
 
 O Job antigo Failed e o Pod de diagnóstico Error foram preservados para histórico. Esses estados descrevem tentativas já encerradas; frontend, backend e PostgreSQL atuais estão Running 1/1. O PVC original SQLite permanece preservado.
 

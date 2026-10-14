@@ -2,6 +2,54 @@
 
 Laboratório para aprender Docker, Kubernetes e operação de aplicações com uma lista de tarefas simples em React, Node.js, TypeScript e banco de dados.
 
+O foco é entender como construir imagens, conectar serviços, persistir dados, implantar no Kubernetes e investigar comportamento em operação. A aplicação é pequena para que a infraestrutura permaneça visível: sem framework HTTP, ORM ou dependências de teste externas.
+
+## Por onde começar
+
+1. Leia [a visão geral e o glossário](guias/implementacao/00-visao-geral-e-glossario.md): camadas, containers, Pods, Deployments, Services, armazenamento e tipos utilizados.
+2. Siga [o índice sequencial](guias/implementacao/README.md), do ambiente até carga/HPA e diagnóstico.
+3. Use [os documentos de operação](docs/README.md) para consultar decisões, resultados e procedimentos específicos.
+4. Confira [o roadmap](docs/ROADMAP.md) para distinguir implementação concluída, validação pendente e evolução futura.
+
+Todos os comandos dos guias partem da raiz deste repositório, no terminal Ubuntu WSL. Não aplique todos os manifests Kubernetes de uma vez: há arquivos de fases distintas, migração e diagnóstico.
+
+## Estado do projeto
+
+| Área | Implementado e validado | Limite ou pendência |
+|---|---|---|
+| Docker Compose | React/Nginx, API, SQLite em volume e testes funcionais | Uma API; banco separado do Kubernetes |
+| Kubernetes | kind, Services, Deployments, ConfigMap, probes e recursos | Um nó local; acesso por port-forward |
+| PostgreSQL | StatefulSet/PVC, migração de uma tarefa e API 0.2.1 | Uma instância de banco, sem alta disponibilidade |
+| Proteção de dados | Backup fora do kind e restauração em banco separado | Cópia local; produção exige armazenamento externo |
+| Escala | Dez APIs Ready e HPA de duas a dez por CPU | Reteste de carga do Nginx final pendente |
+| Diagnóstico | Logs JSON, request ID, saúde e métricas recentes de recursos | Prometheus, Grafana e centralização de logs futuros |
+
+## Mapa das pastas
+
+| Pasta / arquivo | O que consultar |
+|---|---|
+| [backend/](backend/README.md) | API Node.js/TypeScript, contrato HTTP, drivers, migração e testes |
+| [frontend/](frontend/README.md) | React compilado, Nginx, proxy e relação com a API |
+| [k8s/](k8s/README.md) | Manifests, ordem de aplicação e ligação entre recursos |
+| [scripts/](scripts/README.md) | Diagnóstico, testes, backup, restauração e gerador de carga |
+| [guias/implementacao/](guias/implementacao/README.md) | Glossário e dez capítulos com comandos, exemplos e validação |
+| [docs/](docs/README.md) | Documentação operacional, decisões e resultados medidos |
+| [compose.yaml](compose.yaml) | Serviços da execução inicial, rede, volume e recursos |
+| [compose.postgres-test.yaml](compose.postgres-test.yaml) | Ambiente isolado para testes PostgreSQL |
+| [AGENTS.md](AGENTS.md) | Regras técnicas, documentação e fluxo Git |
+| `.backups/postgres/` | Backups locais privados; pasta criada pelo script e ignorada pelo Git |
+
+## Como o projeto foi construído
+
+1. **Aplicação mínima:** React para tarefas e API HTTP nativa com SQLite. O contrato `{id, title, done}` permaneceu estável ao mudar de banco.
+2. **Containerização:** builds multi-stage, imagens com versões explícitas, execução sem root, health checks e `.dockerignore`. Compose conectou frontend e API, preservando SQLite em volume.
+3. **Kubernetes local:** kind recebeu as imagens; Namespace, PVC, Deployment, Service e ConfigMap reproduziram o fluxo da aplicação, com probes e requests/limits.
+4. **PostgreSQL:** um StatefulSet e PVC próprios receberam os dados por Job transacional. A leitura SQLite/WAL foi feita sobre snapshot temporário para preservar a origem somente leitura.
+5. **Recuperação:** `pg_dump` gerou uma cópia fora do kind; restauração em outro banco conferiu tarefas sem sobrescrever o banco original.
+6. **Escala e investigação:** múltiplas APIs compartilharam PostgreSQL; Metrics Server alimentou o HPA. Carga revelou timeouts/502 em transições. Nginx passou a reutilizar conexões e a API ganhou preStop; os testes funcionais finais passaram, mas a carga dessa configuração será revalidada na próxima sessão.
+
+Cada etapa conecta conceito, implementação e verificação. Resultados de carga com falhas permanecem documentados; não representam capacidade aprovada.
+
 ## Base do laboratório: aplicação via Docker Compose
 
 - React: adicionar, listar, concluir e excluir tarefas.
@@ -167,7 +215,7 @@ A readiness retorna HTTP 503 se o banco selecionado estiver indisponível. Liven
 ## Convenções
 
 - Branch por funcionalidade: `feat/docker-task-app`, `feat/kubernetes-local`, `feat/observability`; correções em `fix/<assunto>` e documentação em `docs/<assunto>`.
-- Commits após validação, seguindo Conventional Commits e a identidade configurada pelo usuário, sem atribuição ao modelo.
+- Commits após validação, seguindo Conventional Commits e a identidade Git configurada de Yuri Lopes, sem coautores ou créditos externos.
 - Sem push, merge, instalação global ou exclusão de volumes sem autorização.
 - Uma etapa por vez, com explicação, validação e confirmação do aprendizado.
 
