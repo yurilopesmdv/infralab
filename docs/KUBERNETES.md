@@ -1,6 +1,6 @@
 # Kubernetes local, passo a passo
 
-**Status: backend implantado e validado; frontend pendente.** O usuário criou o cluster e aplicou os manifests durante as aulas. Primeiro valide o [guia de Docker](DOCKER.md).
+**Status: frontend, backend e persistência implantados e validados.** O usuário criou o cluster, aplicou os manifests e testou a aplicação no navegador durante as aulas. Primeiro valide o [guia de Docker](DOCKER.md).
 
 Ambiente validado: WSL 3.0.3.0, Docker Engine 29.8.2 com cgroup v2, kind 0.33.0 e Kubernetes/kubectl 1.35.8. A falha inicial foi diagnosticada nos logs do kubelet: cgroup v1 impedia sua inicialização. Após atualizar WSL e reiniciar Docker, o cluster incompleto foi removido e recriado pelo usuário.
 
@@ -46,6 +46,43 @@ Para investigar: `kubectl --context kind-infralab describe pods -n infralab -l a
 
 O volume é separado do banco Compose. A política de recuperação é `Delete`: excluir o PVC pode apagar os dados. Não o exclua para corrigir erros. O armazenamento local não garante sobrevivência à exclusão do cluster kind.
 
+## Frontend: ConfigMap, Deployment e Service
+
+O ConfigMap `frontend-nginx` contém `nginx.conf`. O Deployment monta esse arquivo em `/etc/nginx/nginx.conf` usando `subPath`, sem substituir os demais arquivos do diretório. Executa com UID/GID 101, sem elevação de privilégios, com probes em `/health` e limites de recursos. As probes verificam o Nginx, não a disponibilidade do backend.
+
+Execute na ordem abaixo, parando se qualquer validação falhar:
+
+```bash
+kubectl --context kind-infralab apply --dry-run=server -f k8s/frontend-configmap.yaml
+kubectl --context kind-infralab apply -f k8s/frontend-configmap.yaml
+kubectl --context kind-infralab apply --dry-run=server -f k8s/frontend-deployment.yaml
+kubectl --context kind-infralab apply -f k8s/frontend-deployment.yaml
+kubectl --context kind-infralab rollout status deployment/frontend -n infralab --timeout=120s
+kubectl --context kind-infralab exec -n infralab deployment/frontend -- nginx -t
+kubectl --context kind-infralab apply --dry-run=server -f k8s/frontend-service.yaml
+kubectl --context kind-infralab apply -f k8s/frontend-service.yaml
+kubectl --context kind-infralab get pods,services -n infralab
+```
+
+Esperado: Pods `Running 1/1` e Nginx com `syntax is ok` e `test is successful`. A validação do Kubernetes não substitui a validação da sintaxe Nginx. Com `subPath`, atualizar o ConfigMap exige substituir os Pods para receberem o arquivo atualizado; Nginx não recarrega a configuração automaticamente.
+
+O Nginx usa `backend.infralab.svc.cluster.local:3000`. O Service mantém o endereço interno e seleciona Pods prontos por `app: backend`. O DNS não depende do IP individual do Pod. Essa configuração substitui o resolver `127.0.0.11` específico da rede Compose.
+
+Para acessar sem conflitar com o Compose na porta 8080:
+
+```bash
+kubectl --context kind-infralab port-forward -n infralab service/frontend 8081:8080
+```
+
+Mantenha esse terminal aberto; em outro:
+
+```bash
+curl --fail -sS http://localhost:8081/api/health/ready
+curl --fail -sS http://localhost:8081/api/tasks
+```
+
+Abra http://localhost:8081, crie e conclua uma tarefa. Esse exercício foi validado pelo usuário. O fluxo é navegador → port-forward → frontend/Nginx → Service backend → Pod da API → SQLite no PVC. Service `ClusterIP` é interno; port-forward fornece acesso local temporário e precisa ser reaberto se o Pod ao qual se conectou for substituído.
+
 ## Sequência de aprendizado
 
 | Passo | Conceito e configuração | Validação que aprenderemos |
@@ -60,7 +97,7 @@ O volume é separado do banco Compose. A política de recuperação é `Delete`:
 | 8 | Criar Deployment e Service do frontend; usar port-forward para acesso local inicialmente | `kubectl port-forward`, teste pelo navegador |
 | 9 | Repetir CRUD e verificar persistência após substituir o Pod; explicar que armazenamento local do kind tem limites e não sobrevive necessariamente à exclusão do cluster | Testes Node, PVC e logs |
 
-O Compose não será simplesmente copiado: `depends_on` não tem equivalente direto em Kubernetes, health checks dos Dockerfiles não substituem probes e o DNS do Nginx precisa mudar. Vamos explicar cada diferença na configuração correspondente.
+O Compose não foi simplesmente copiado: `depends_on` não tem equivalente direto em Kubernetes, health checks dos Dockerfiles não substituem probes e o DNS do Nginx foi adaptado à rede do cluster.
 
 ## Como as probes serão utilizadas
 

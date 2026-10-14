@@ -14,4 +14,4 @@ Responda em português e ensine Docker/Kubernetes passo a passo. Leia README.md 
 - Inclua alterações anteriores somente quando fizerem parte do escopo autorizado; confira o diff antes de cada commit.
 - Mantenha o README com arquitetura, execução, validação e limites do laboratório. Diferencie funcionalidades implementadas de etapas futuras.
 
-Etapa atual: aplicação via Compose e backend Kubernetes local validados. O usuário executa os comandos Kubernetes para aprender; o assistente cuida da revisão, documentação e commits. Frontend Kubernetes e observabilidade são próximos passos, sujeitos à confirmação da etapa.
+Etapa atual: aplicação completa via Compose e Kubernetes local validada, com frontend, backend e SQLite persistente. O usuário executa os comandos Kubernetes para aprender; o assistente cuida da revisão, documentação e commits. Próximas etapas dependem da confirmação do usuário; PostgreSQL deve preceder escalabilidade de escrita, e observabilidade permanece futura.

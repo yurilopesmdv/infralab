@@ -99,18 +99,20 @@ docker compose up -d --wait
 
 Os Dockerfiles copiam as dependências antes do código: alterações no código podem reutilizar a camada de `npm ci`. Os lockfiles fixam a resolução das dependências. As imagens base usam versões explícitas; atualizações de segurança devem ser feitas e testadas deliberadamente. As imagens finais não incluem compiladores nem dependências de desenvolvimento.
 
-## Backend no Kubernetes local
+## Aplicação no Kubernetes local
 
 O backend já foi implantado no cluster kind `infralab`, com uma réplica, Deployment `Recreate`, PVC `sqlite-data`, Service interno, probes e limites de recursos. Os manifests estão em `k8s/`. A saúde da API e a criação de tarefas foram validadas; a tarefa permaneceu após substituir o Pod.
 
+O frontend também está implantado com Deployment, Service e ConfigMap Nginx. A configuração encaminha `/api/` para `backend.infralab.svc.cluster.local:3000`, usando o endereço estável do Service. O selector `app: backend` identifica os Pods da API; não é o endereço utilizado pelo navegador.
+
 ```bash
 kubectl --context kind-infralab get pods,pvc,services -n infralab
-kubectl --context kind-infralab port-forward -n infralab service/backend 3001:3000
+kubectl --context kind-infralab port-forward -n infralab service/frontend 8081:8080
 ```
 
-No segundo terminal: `curl --fail -sS http://localhost:3001/api/health/ready`. O encaminhamento permanece aberto até `Ctrl+C`.
+Abra http://localhost:8081. No segundo terminal: `curl --fail -sS http://localhost:8081/api/health/ready`. O encaminhamento permanece aberto até `Ctrl+C`; o acesso no navegador e o fluxo frontend → API → banco foram validados pelo usuário.
 
-O banco Kubernetes é separado do Compose. O armazenamento local do kind não garante persistência após excluir o cluster. Frontend Kubernetes e observabilidade ainda estão pendentes. Consulte [o guia Kubernetes](docs/KUBERNETES.md).
+O banco Kubernetes é separado do Compose. O armazenamento local do kind não garante persistência após excluir o cluster. Observabilidade, PostgreSQL e escalabilidade continuam pendentes. Consulte [o guia Kubernetes](docs/KUBERNETES.md).
 
 ## Evolução e limites
 
@@ -118,7 +120,7 @@ Este laboratório publica HTTP somente em `127.0.0.1`, não tem autenticação e
 
 Etapas futuras, ainda não implementadas:
 
-1. **Completar Kubernetes com kind:** frontend e ConfigMap Nginx; backend, Service, PVC e probes já estão implementados.
+1. **Evoluir o acesso Kubernetes:** hoje usamos port-forward temporário; acesso HTTP por um controlador será uma etapa separada, se autorizada.
 2. **PostgreSQL:** migrar antes de escalar escrita para múltiplas réplicas. Não compartilhar SQLite entre vários Pods como solução de escalabilidade.
 3. **Escalabilidade:** réplicas, HPA e testes de carga após a migração.
 4. **Monitoramento:** métricas HTTP, latência e taxa de erros via Prometheus; dashboards e alertas no Grafana.
@@ -147,4 +149,4 @@ A readiness retorna HTTP 503 se o banco estiver indisponível. Liveness não dep
 
 Leia [AGENTS.md](AGENTS.md) e [o roadmap](docs/ROADMAP.md).
 
-Para aprender a configurar cada arquivo e validar cada conceito, siga [o guia prático de Docker](docs/DOCKER.md) e [o guia Kubernetes](docs/KUBERNETES.md), com o backend validado e a sequência futura do frontend.
+Para aprender a configurar cada arquivo e validar cada conceito, siga [o guia prático de Docker](docs/DOCKER.md) e [o guia Kubernetes](docs/KUBERNETES.md), com frontend, backend e persistência validados.
