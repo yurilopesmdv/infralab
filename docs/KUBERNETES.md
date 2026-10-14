@@ -109,6 +109,8 @@ Requests orientam agendamento; limits limitam consumo. HPA ficará para depois d
 
 ## Etapas seguintes
 
+PostgreSQL já foi implantado e sua persistência validada. A API e o Job de migração estão preparados, mas a troca do banco da aplicação no cluster ainda precisa ser executada pelo usuário. Siga [o guia PostgreSQL](POSTGRESQL.md) antes de aplicar o Deployment backend atualizado. A referência SQLite foi preservada em `k8s/legacy/`; não aplique essa pasta junto com os manifests atuais.
+
 Migrar para PostgreSQL antes de escalar escrita. Só então aumentar réplicas e estudar HPA. Depois instrumentar métricas HTTP e instalar Prometheus/Grafana, incluindo latência, taxa de erros, alertas e correlação com logs JSON. Cada etapa terá seu próprio guia, branch, testes e commit.
 
 Pergunta que vamos responder na prática: se um Pod é substituído, quais recursos mantêm os dados e quais mantêm o endereço de acesso ao serviço?

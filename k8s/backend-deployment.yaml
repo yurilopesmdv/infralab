@@ -15,19 +15,40 @@ spec:
       labels:
         app: backend
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
       containers:
       - name: backend
-        image: infralab-backend:0.1.0
+        image: infralab-backend:0.2.0
         imagePullPolicy: Never
         ports:
          - name: http
            containerPort: 3000
         env:
-            - name: DATABASE_PATH
-              value: /app/data/tasks.db
-        volumeMounts:
-          - name: sqlite-data
-            mountPath: /app/data
+          - name: DB_DRIVER
+            value: postgres
+          - name: PGHOST
+            value: postgres.infralab.svc.cluster.local
+          - name: PGPORT
+            value: "5432"
+          - name: PGUSER
+            valueFrom:
+              secretKeyRef:
+                name: postgres-credentials
+                key: username
+          - name: PGDATABASE
+            valueFrom:
+              secretKeyRef:
+                name: postgres-credentials
+                key: database
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-credentials
+                key: password
         resources:
           requests:
             memory: "64Mi"
@@ -53,7 +74,3 @@ spec:
           initialDelaySeconds: 10
           periodSeconds: 10
           timeoutSeconds: 2
-      volumes:
-        - name: sqlite-data
-          persistentVolumeClaim:
-            claimName: sqlite-data

@@ -10,6 +10,8 @@ FROM node:24.13.0-bookworm-slim AS runtime
 ENV NODE_ENV=production DATABASE_PATH=/app/data/tasks.db
 WORKDIR /app
 RUN mkdir data && chown node:node data
+COPY package*.json ./
+RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build --chown=node:node /app/dist ./dist
 COPY --chown=node:node package.json ./
 USER node
@@ -19,4 +21,4 @@ CMD ["node", "dist/server.js"]
 
 FROM runtime AS test
 COPY --chown=node:node tests ./tests
-CMD ["node", "--test", "tests/app.test.mjs"]
+CMD ["node", "--test", "--test-concurrency=1", "tests/app.test.mjs", "tests/postgres.test.mjs", "tests/sqlite.test.mjs"]

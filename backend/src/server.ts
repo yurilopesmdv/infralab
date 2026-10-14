@@ -1,17 +1,8 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
-import { mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
-import { DatabaseSync } from 'node:sqlite';
+import { createStore } from './store.js';
 
-const databasePath = process.env.DATABASE_PATH ?? './data/tasks.db';
-mkdirSync(dirname(databasePath), { recursive: true });
-const db = new DatabaseSync(databasePath);
-db.exec(`PRAGMA journal_mode = WAL;
-  CREATE TABLE IF NOT EXISTS tasks (
-    id INTEGER PRIMARY KEY, title TEXT NOT NULL,
-    done INTEGER NOT NULL DEFAULT 0 CHECK (done IN (0, 1))
-  ) STRICT;`);
+const store = await createStore();
 
 class HttpError extends Error {
   constructor(public status: number, message: string) { super(message); }
@@ -54,47 +45,45 @@ const server = createServer(async (req, res) => {
       return reply(res, 200, { status: 'ok' });
     }
     if (req.method === 'GET' && (path === '/api/health' || path === '/api/health/ready')) {
-      try { db.prepare('SELECT 1').get(); }
-      catch { return reply(res, 503, { status: 'unavailable', database: 'sqlite' }); }
-      return reply(res, 200, { status: 'ok', database: 'sqlite' });
+      try { await store.ready(); }
+      catch { return reply(res, 503, { status: 'unavailable', database: store.database }); }
+      return reply(res, 200, { status: 'ok', database: store.database });
     }
     if (req.method === 'GET' && path === '/api/tasks') {
-      return reply(res, 200, db.prepare('SELECT * FROM tasks ORDER BY id DESC').all());
+      return reply(res, 200, await store.list());
     }
     if (req.method === 'POST' && path === '/api/tasks') {
       const { title } = await readBody(req);
       if (typeof title !== 'string' || !title.trim() || title.trim().length > 200) {
         throw new HttpError(400, 'Título deve ter entre 1 e 200 caracteres.');
       }
-      const result = db.prepare('INSERT INTO tasks (title) VALUES (?)').run(title.trim());
-      return reply(res, 201, db.prepare('SELECT * FROM tasks WHERE id = ?').get(result.lastInsertRowid));
+      return reply(res, 201, await store.create(title.trim()));
     }
     const match = path.match(/^\/api\/tasks\/([1-9]\d*)$/);
     if (match && (req.method === 'PATCH' || req.method === 'DELETE')) {
       const id = Number(match[1]);
-      if (!Number.isSafeInteger(id)) throw new HttpError(400, 'ID inválido.');
-      if (!db.prepare('SELECT id FROM tasks WHERE id = ?').get(id)) {
-        throw new HttpError(404, 'Tarefa não encontrada.');
-      }
+      if (!Number.isSafeInteger(id) || (store.database === 'postgres' && id > 2_147_483_647)) throw new HttpError(400, 'ID inválido.');
       if (req.method === 'DELETE') {
-        db.prepare('DELETE FROM tasks WHERE id = ?').run(id);
+        if (!await store.remove(id)) throw new HttpError(404, 'Tarefa não encontrada.');
         res.writeHead(204).end();
         return;
       }
       const { done } = await readBody(req);
       if (typeof done !== 'boolean') throw new HttpError(400, 'done deve ser booleano.');
-      db.prepare('UPDATE tasks SET done = ? WHERE id = ?').run(Number(done), id);
-      return reply(res, 200, db.prepare('SELECT * FROM tasks WHERE id = ?').get(id));
+      const task = await store.update(id, done);
+      if (!task) throw new HttpError(404, 'Tarefa não encontrada.');
+      return reply(res, 200, task);
     }
     throw new HttpError(404, 'Rota não encontrada.');
   } catch (error) {
     const status = error instanceof HttpError ? error.status : 500;
-    if (status === 500) console.error(JSON.stringify({ level: 'error', requestId, message: String(error) }));
+    if (status === 500) console.error(JSON.stringify({ level: 'error', requestId, message: 'Falha na operação de banco' }));
     if (!res.destroyed) reply(res, status, { error: status === 500 ? 'Erro interno.' : (error as Error).message });
   }
 });
 server.requestTimeout = 10_000;
-server.listen(3000, '0.0.0.0', () => console.log(JSON.stringify({ level: 'info', message: 'API iniciada', port: 3000 })));
+const port = Number(process.env.PORT ?? 3000);
+server.listen(port, '0.0.0.0', () => console.log(JSON.stringify({ level: 'info', message: 'API iniciada', port, database: store.database })));
 for (const signal of ['SIGTERM', 'SIGINT']) {
-  process.on(signal, () => server.close(() => { db.close(); process.exit(0); }));
+  process.on(signal, () => server.close(() => { void store.close().then(() => process.exit(0)); }));
 }

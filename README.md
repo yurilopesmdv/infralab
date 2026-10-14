@@ -88,6 +88,8 @@ docker compose up -d --wait
 |---|---|
 | `compose.yaml` | Serviços, volume, portas e recursos |
 | `backend/src/server.ts` | API, SQLite, validação e logs |
+| `backend/src/store.ts` | Operações SQLite/PostgreSQL, mantendo o contrato HTTP |
+| `backend/src/migrate-sqlite.ts` | Cópia transacional para PostgreSQL |
 | `backend/Dockerfile` | Compila TypeScript e executa JavaScript |
 | `frontend/src/main.tsx` | Interface React e chamadas HTTP |
 | `frontend/nginx.conf` | Arquivos estáticos e proxy para a API |
@@ -112,7 +114,13 @@ kubectl --context kind-infralab port-forward -n infralab service/frontend 8081:8
 
 Abra http://localhost:8081. No segundo terminal: `curl --fail -sS http://localhost:8081/api/health/ready`. O encaminhamento permanece aberto até `Ctrl+C`; o acesso no navegador e o fluxo frontend → API → banco foram validados pelo usuário.
 
-O banco Kubernetes é separado do Compose. O armazenamento local do kind não garante persistência após excluir o cluster. Observabilidade, PostgreSQL e escalabilidade continuam pendentes. Consulte [o guia Kubernetes](docs/KUBERNETES.md).
+O banco Kubernetes é separado do Compose. O armazenamento local do kind não garante persistência após excluir o cluster. Consulte [o guia Kubernetes](docs/KUBERNETES.md).
+
+### Migração PostgreSQL preparada
+
+PostgreSQL já foi implantado e teve conexão SQL e persistência validadas pelo usuário. A API 0.2.0 suporta PostgreSQL com o driver `pg`, e há um Job para copiar as tarefas do SQLite preservando IDs, estados e origem. O código foi testado em ambiente Docker isolado; a execução do Job e a troca da API no cluster continuam pendentes. **Não aplique o Deployment atualizado antes de copiar os dados.** Siga [o guia de migração PostgreSQL](docs/POSTGRESQL.md).
+
+O Compose principal permanece com SQLite, selecionado por padrão. Para testar PostgreSQL sem alterar o cluster ou esse Compose: `bash scripts/test-postgres.sh`. HPA, dez réplicas e observabilidade ainda não foram implementados.
 
 ## Evolução e limites
 
@@ -121,7 +129,7 @@ Este laboratório publica HTTP somente em `127.0.0.1`, não tem autenticação e
 Etapas futuras, ainda não implementadas:
 
 1. **Evoluir o acesso Kubernetes:** hoje usamos port-forward temporário; acesso HTTP por um controlador será uma etapa separada, se autorizada.
-2. **PostgreSQL:** migrar antes de escalar escrita para múltiplas réplicas. Não compartilhar SQLite entre vários Pods como solução de escalabilidade.
+2. **Concluir migração PostgreSQL no cluster:** executar o Job de cópia e validar a API 0.2.0, antes de escalar escrita. Não compartilhar SQLite entre vários Pods como solução de escalabilidade.
 3. **Escalabilidade:** réplicas, HPA e testes de carga após a migração.
 4. **Monitoramento:** métricas HTTP, latência e taxa de erros via Prometheus; dashboards e alertas no Grafana.
 5. **Observabilidade:** centralizar logs JSON e correlacionar request IDs entre serviços, com Loki. Ainda não há Prometheus, Grafana ou Loki nesta etapa.
@@ -134,11 +142,11 @@ Em produção também precisaremos de TLS, autenticação, gestão de segredos, 
 | Endpoint | Verificação | Uso |
 |---|---|---|
 | `/api/health/live` | Processo HTTP responde | Liveness probe Kubernetes |
-| `/api/health/ready` | Processo responde e consulta SQLite | Health check Docker e readiness probe Kubernetes |
+| `/api/health/ready` | Processo responde e consulta o banco selecionado | Health check Docker e readiness probe Kubernetes |
 | `/api/health` | Alias de readiness | Diagnóstico manual |
 | `/health` no frontend | Nginx responde | Health check do frontend |
 
-A readiness retorna HTTP 503 se o banco estiver indisponível. Liveness não depende do banco, para evitar reinícios quando uma dependência falha. Ao migrar para PostgreSQL, atualizaremos a consulta de readiness. O Prometheus precisará de um endpoint de métricas separado, a implementar na etapa de observabilidade; não coleta métricas automaticamente desses endpoints JSON.
+A readiness retorna HTTP 503 se o banco selecionado estiver indisponível. Liveness não depende do banco, para evitar reinícios quando uma dependência falha. O Prometheus precisará de um endpoint de métricas separado, a implementar na etapa de observabilidade; não coleta métricas automaticamente desses endpoints JSON.
 
 ## Convenções
 

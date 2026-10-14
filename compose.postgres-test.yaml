@@ -1,0 +1,58 @@
+# Ambiente descartável de testes, separado do Compose do usuário e do Kubernetes.
+name: infralab-postgres-test
+services:
+  postgres:
+    image: postgres:17.11-alpine3.23
+    user: "70:70"
+    environment:
+      POSTGRES_USER: infralab_test
+      POSTGRES_DB: infralab_test
+      POSTGRES_PASSWORD: ${INFRALAB_TEST_PASSWORD:?Execute bash scripts/test-postgres.sh}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    tmpfs:
+      - /var/lib/postgresql/data:uid=70,gid=70
+    mem_limit: 512m
+    cpus: 0.5
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  backend:
+    build:
+      context: ./backend
+      target: runtime
+    init: true
+    environment:
+      DB_DRIVER: postgres
+      PGHOST: postgres
+      PGUSER: infralab_test
+      PGDATABASE: infralab_test
+      PGPASSWORD: ${INFRALAB_TEST_PASSWORD:?Execute bash scripts/test-postgres.sh}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    mem_limit: 256m
+    cpus: 0.5
+  frontend:
+    build: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    mem_limit: 64m
+    cpus: 0.5
+  test:
+    profiles: [test]
+    build:
+      context: ./backend
+      target: test
+    environment:
+      BASE_URL: http://frontend:8080
+      EXPECTED_DATABASE: postgres
+      PG_TESTS: "1"
+      PGHOST: postgres
+      PGUSER: infralab_test
+      PGDATABASE: infralab_test
+      PGPASSWORD: ${INFRALAB_TEST_PASSWORD:?Execute bash scripts/test-postgres.sh}
+    mem_limit: 256m
+    cpus: 0.5

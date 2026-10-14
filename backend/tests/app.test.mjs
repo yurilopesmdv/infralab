@@ -25,7 +25,9 @@ test('liveness e readiness respondem com request ID', async () => {
   for (const path of ['/api/health', '/api/health/live', '/api/health/ready']) {
     const response = await request(path);
     assert.equal(response.status, 200);
-    assert.equal((await response.json()).status, 'ok');
+    const health = await response.json();
+    assert.equal(health.status, 'ok');
+    if (!path.endsWith('/live')) assert.equal(health.database, process.env.EXPECTED_DATABASE ?? 'sqlite');
     assert.match(response.headers.get('x-request-id'), /^[a-f0-9-]{36}$/);
   }
 });
@@ -39,7 +41,7 @@ test('CRUD mantém conteúdo Unicode e valida entradas', async () => {
     assert.equal((await request('/api/tasks', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{'
     })).status, 400);
-    const title = 'Teste InfraLab: ação e persistência 🚀';
+    const title = "Teste InfraLab: ação 🚀 '); DROP TABLE tasks; --";
     const created = await request('/api/tasks', json('POST', { title }));
     assert.equal(created.status, 201);
     const task = await created.json();

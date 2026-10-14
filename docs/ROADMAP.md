@@ -13,4 +13,6 @@ Cada módulo deve ter comandos, explicações, validação e commit Git em branc
 
 A aplicação via Compose está validada. A API usa HTTP nativo do Node.js, sem Express, para reduzir dependências.
 
-Módulo 5 validado: cluster kind, imagens carregadas, Namespace, Deployments, probes, recursos, Services, PVC e ConfigMap Nginx. A persistência foi confirmada após substituir o Pod, e o fluxo completo foi testado no navegador via port-forward do frontend. PostgreSQL, escalabilidade e observabilidade continuam futuros.
+Módulo 5 validado: cluster kind, imagens carregadas, Namespace, Deployments, probes, recursos, Services, PVC e ConfigMap Nginx. A persistência foi confirmada após substituir o Pod, e o fluxo completo foi testado no navegador via port-forward do frontend.
+
+Módulo 6 em andamento: PostgreSQL com StatefulSet/PVC e conexão SQL/persistência validados pelo usuário. API 0.2.0, Job de cópia e testes de migração preparados; execução da migração e troca da API no cluster ainda pendentes. Dez réplicas, HPA, carga e observabilidade continuam futuros. Veja docs/POSTGRESQL.md.
