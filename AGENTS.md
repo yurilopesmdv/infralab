@@ -13,5 +13,6 @@ Responda em português e ensine Docker/Kubernetes passo a passo. Leia README.md 
 - Não altere a configuração global do Git. Não faça push ou merge sem autorização.
 - Inclua alterações anteriores somente quando fizerem parte do escopo autorizado; confira o diff antes de cada commit.
 - Mantenha o README com arquitetura, execução, validação e limites do laboratório. Diferencie funcionalidades implementadas de etapas futuras.
+- Após concluir escala, carga e HPA, criar `guias/implementacao/` com Markdown numerado, comandos, código/YAML e conexões entre Docker, frontend/Nginx, API, banco e Kubernetes. Finalizar esse guia antes de começar Prometheus; cada capítulo deve conectar pré-requisitos, implementação e validação à próxima etapa.
 
 Etapa atual: Compose permanece SQLite; Kubernetes usa API 0.2.1 com PostgreSQL. Migração de uma tarefa concluída pelo Job sqlite-to-postgres-v2, saúde e CRUD validados. Preserve o PVC SQLite original e os logs das tentativas anteriores. O usuário pratica Kubernetes; o assistente pode executar comandos quando explicitamente autorizado e cuida do código, revisão, documentação e commits. Escalabilidade, HPA e observabilidade são etapas posteriores.

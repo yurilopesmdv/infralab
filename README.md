@@ -103,7 +103,7 @@ Os Dockerfiles copiam as dependências antes do código: alterações no código
 
 ## Aplicação no Kubernetes local
 
-O backend está implantado no cluster kind `infralab`, com uma réplica, Deployment `Recreate`, Service interno, probes e limites de recursos. A API 0.2.1 usa PostgreSQL, executado em StatefulSet com PVC próprio. O PVC `sqlite-data` da etapa anterior permanece preservado, sem montagem na API atual. Os manifests estão em `k8s/`.
+O backend está implantado no cluster kind `infralab`, com duas réplicas, Deployment `Recreate`, Service interno, probes e limites de recursos. A API 0.2.1 usa PostgreSQL, executado em StatefulSet com PVC próprio. O PVC `sqlite-data` da etapa anterior permanece preservado, sem montagem na API atual. Os manifests estão em `k8s/`.
 
 O frontend também está implantado com Deployment, Service e ConfigMap Nginx. A configuração encaminha `/api/` para `backend.infralab.svc.cluster.local:3000`, usando o endereço estável do Service. O selector `app: backend` identifica os Pods da API; não é o endereço utilizado pelo navegador.
 
@@ -120,7 +120,9 @@ O banco Kubernetes é separado do Compose. O armazenamento local do kind não ga
 
 PostgreSQL foi implantado e teve conexão SQL e persistência validadas pelo usuário. O Job `sqlite-to-postgres-v2` copiou uma tarefa, preservando ID, estado e origem SQLite. A API 0.2.1 está em execução com PostgreSQL; readiness retornou `database: postgres` e três testes HTTP passaram pelo frontend, cobrindo CRUD e saúde. O código também passou em 13 testes isolados. Para reproduzir a migração, siga [o guia PostgreSQL](docs/POSTGRESQL.md) e aplique o Deployment atualizado somente após copiar os dados.
 
-O Compose principal permanece com SQLite, selecionado por padrão. Para testar PostgreSQL sem alterar o cluster ou esse Compose: `bash scripts/test-postgres.sh`. HPA, dez réplicas e observabilidade ainda não foram implementados.
+O Compose principal permanece com SQLite, selecionado por padrão. Para testar PostgreSQL sem alterar o cluster ou esse Compose: `bash scripts/test-postgres.sh`. Duas réplicas da API foram validadas com três testes HTTP e dois endpoints prontos. Veja [escalabilidade](docs/ESCALABILIDADE.md). HPA, dez réplicas e observabilidade ainda não foram implementados.
+
+Antes de Prometheus, concluiremos escala/carga/HPA e criaremos guias/implementacao/ com Markdown numerado, comandos, exemplos de código/YAML, validação e conexões entre Docker, Nginx, API, banco e Kubernetes.
 
 ## Evolução e limites
 

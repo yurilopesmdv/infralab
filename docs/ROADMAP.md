@@ -16,3 +16,7 @@ A aplicação via Compose está validada. A API usa HTTP nativo do Node.js, sem 
 Módulo 5 validado: cluster kind, imagens carregadas, Namespace, Deployments, probes, recursos, Services, PVC e ConfigMap Nginx. A persistência foi confirmada após substituir o Pod, e o fluxo completo foi testado no navegador via port-forward do frontend.
 
 Módulo 6 em andamento: PostgreSQL com StatefulSet/PVC e conexão SQL/persistência validados. Job sqlite-to-postgres-v2 concluiu a cópia de uma tarefa; API 0.2.1 está usando PostgreSQL, com três testes HTTP no cluster aprovados e 13 testes isolados. SQLite original preservado. Dez réplicas, HPA, carga e observabilidade continuam futuros. Veja docs/POSTGRESQL.md.
+
+Sequência acordada antes de Prometheus: validar escala gradual da API, teste de carga e HPA; depois criar `guias/implementacao/` com arquivos Markdown numerados. Os guias devem ensinar ambiente, arquitetura, frontend React/Nginx, API, SQLite/volumes, Compose/redes, kind, Deployments/Services/ConfigMaps/probes, PostgreSQL/Secret/PVC/migração e escalabilidade. Cada etapa terá comandos explicados, exemplos de código/YAML, validação, resultados esperados e ligação explícita com a etapa anterior e seguinte. Só depois iniciar Prometheus/Grafana. CI permanece uma etapa futura.
+
+Escala inicial validada: duas réplicas da API Ready, Service com dois endpoints e três testes HTTP aprovados. API de métricas ainda ausente. Próximos passos: carga controlada, escala até dez e HPA. Veja docs/ESCALABILIDADE.md.
