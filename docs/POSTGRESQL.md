@@ -2,7 +2,7 @@
 
 ## Estado desta etapa
 
-O usuário implantou PostgreSQL 17.11 com Service headless, StatefulSet e PVC próprios. Conexão autenticada, SQL e persistência após substituição do Pod foram validados. Com autorização explícita para execução pelo assistente, o Job `sqlite-to-postgres-v2` concluiu a migração de uma tarefa e a API 0.2.1 foi implantada. Readiness retornou `database: postgres`; o frontend listou a tarefa original e três testes HTTP passaram no cluster. Treze testes isolados também passaram. **A migração está concluída; os passos abaixo documentam como reproduzi-la em outro ambiente.** Aumento de réplicas e HPA ainda não foram executados.
+O usuário implantou PostgreSQL 17.11 com Service headless, StatefulSet e PVC próprios. Conexão autenticada, SQL e persistência após substituição do Pod foram validados. Com autorização explícita para execução pelo assistente, o Job `sqlite-to-postgres-v2` concluiu a migração de uma tarefa e a API 0.2.1 foi implantada. Readiness retornou `database: postgres`; o frontend listou a tarefa original e três testes HTTP passaram no cluster. Treze testes isolados também passaram. **A migração está concluída; os passos abaixo documentam como reproduzi-la em outro ambiente.** Escala e HPA foram estudados posteriormente; veja [o capítulo de escala](ESCALABILIDADE.md).
 
 O Job antigo Failed e o Pod de diagnóstico Error foram preservados para histórico. Esses estados descrevem tentativas já encerradas; frontend, backend e PostgreSQL atuais estão Running 1/1. O PVC original SQLite permanece preservado.
 
@@ -113,7 +113,7 @@ kubectl --context kind-infralab get pods,pvc -n infralab
 kubectl --context kind-infralab logs deployment/backend -n infralab --tail=20
 ```
 
-O manifest restaura uma réplica, usa `DB_DRIVER=postgres`, recebe credenciais do Secret e não monta mais SQLite. O PVC antigo permanece preservado. Mantemos Recreate nesta transição; estratégia de atualização e réplicas serão estudadas depois.
+O manifest atual usa `DB_DRIVER=postgres`, recebe credenciais do Secret e não monta mais SQLite. O PVC antigo permanece preservado. A transição original usou uma réplica e Recreate; o capítulo posterior de escala adotou RollingUpdate e HPA. Por isso o manifest atual omite replicas: em um laboratório novo, aplique o HPA no capítulo de escala ou ajuste manualmente as réplicas antes dele. Não congele escritores para nova migração com um HPA ativo sem preparar a manutenção.
 
 ## 6. Validar pelo frontend
 

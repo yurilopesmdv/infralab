@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: load-http-
+  namespace: infralab
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 120
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+      containers:
+        - name: load
+          image: infralab-backend:0.2.1
+          imagePullPolicy: Never
+          command: [node, /scripts/load-http.mjs]
+          env:
+            - name: DURATION_SECONDS
+              value: "60"
+            - name: CONCURRENCY
+              value: "8"
+            - name: REQUESTS_PER_SECOND
+              value: "200"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: "1"
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: script
+              mountPath: /scripts
+              readOnly: true
+      volumes:
+        - name: script
+          configMap:
+            name: load-http-script

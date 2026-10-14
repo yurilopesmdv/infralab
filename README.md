@@ -2,7 +2,7 @@
 
 Laboratório para aprender Docker, Kubernetes e operação de aplicações com uma lista de tarefas simples em React, Node.js, TypeScript e banco de dados.
 
-## Etapa atual: aplicação via Docker Compose
+## Base do laboratório: aplicação via Docker Compose
 
 - React: adicionar, listar, concluir e excluir tarefas.
 - API HTTP nativa do Node.js/TypeScript, sem framework ou ORM.
@@ -103,7 +103,17 @@ Os Dockerfiles copiam as dependências antes do código: alterações no código
 
 ## Aplicação no Kubernetes local
 
-O backend está implantado no cluster kind `infralab`, com duas réplicas, Deployment `Recreate`, Service interno, probes e limites de recursos. A API 0.2.1 usa PostgreSQL, executado em StatefulSet com PVC próprio. O PVC `sqlite-data` da etapa anterior permanece preservado, sem montagem na API atual. Os manifests estão em `k8s/`.
+O backend está implantado no cluster kind `infralab`, com Deployment `RollingUpdate`, Service interno, probes e limites de recursos. O HPA controla entre duas e dez réplicas por CPU, usando Metrics Server. A API 0.2.1 usa PostgreSQL, executado em StatefulSet com PVC próprio. O PVC `sqlite-data` da etapa anterior permanece preservado, sem montagem na API atual. Os manifests estão em `k8s/`.
+
+```text
+Navegador → localhost:8081 → port-forward → Service frontend → Nginx/React
+                                                               └─ /api/* → Service backend
+                                                                             └─ APIs (2–10)
+                                                                                  └─ Service postgres
+                                                                                       └─ postgres-0 + PVC
+Metrics Server → métricas de CPU → HPA → quantidade de APIs
+pg_dump → .backups/postgres/ no WSL, fora do kind
+```
 
 O frontend também está implantado com Deployment, Service e ConfigMap Nginx. A configuração encaminha `/api/` para `backend.infralab.svc.cluster.local:3000`, usando o endereço estável do Service. O selector `app: backend` identifica os Pods da API; não é o endereço utilizado pelo navegador.
 
@@ -120,9 +130,9 @@ O banco Kubernetes é separado do Compose. O armazenamento local do kind não ga
 
 PostgreSQL foi implantado e teve conexão SQL e persistência validadas pelo usuário. O Job `sqlite-to-postgres-v2` copiou uma tarefa, preservando ID, estado e origem SQLite. A API 0.2.1 está em execução com PostgreSQL; readiness retornou `database: postgres` e três testes HTTP passaram pelo frontend, cobrindo CRUD e saúde. O código também passou em 13 testes isolados. Para reproduzir a migração, siga [o guia PostgreSQL](docs/POSTGRESQL.md) e aplique o Deployment atualizado somente após copiar os dados.
 
-O Compose principal permanece com SQLite, selecionado por padrão. Para testar PostgreSQL sem alterar o cluster ou esse Compose: `bash scripts/test-postgres.sh`. Duas réplicas da API foram validadas com três testes HTTP e dois endpoints prontos. Veja [escalabilidade](docs/ESCALABILIDADE.md). HPA, dez réplicas e observabilidade ainda não foram implementados.
+O Compose principal permanece com SQLite, selecionado por padrão. Para testar PostgreSQL sem alterar o cluster ou esse Compose: `bash scripts/test-postgres.sh`. Escala manual até dez APIs e aumento/redução automática por HPA foram observados. Três testes HTTP passaram durante carga e a tarefa original permaneceu. Veja [escalabilidade e resultados das tentativas](docs/ESCALABILIDADE.md). Observabilidade Prometheus/Grafana ainda não foi implementada.
 
-Antes de Prometheus, concluiremos escala/carga/HPA e criaremos guias/implementacao/ com Markdown numerado, comandos, exemplos de código/YAML, validação e conexões entre Docker, Nginx, API, banco e Kubernetes.
+Os testes de carga detectaram timeouts e HTTP 502 em transições de réplicas. O Nginx foi atualizado para reutilizar conexões com a API; sintaxe, saúde e CRUD passaram. O reteste de carga dessa configuração ficou para a próxima sessão. Ainda não declaramos capacidade sustentável ou ausência de erros durante escala. Consulte [os resultados e o ponto de retomada](docs/ESCALABILIDADE.md).
 
 ### Backup e restauração validados
 
@@ -130,13 +140,13 @@ O backup PostgreSQL fica em `.backups/postgres/`, fora do kind e ignorado pelo G
 
 ## Evolução e limites
 
-Este laboratório usa acesso local e não tem autenticação. O Compose mantém uma API com SQLite; o Kubernetes usa duas réplicas da API conectadas a uma instância PostgreSQL. Não é uma configuração pronta para exposição pública nem oferece alta disponibilidade do banco.
+Este laboratório usa acesso local e não tem autenticação. O Compose mantém uma API com SQLite; o Kubernetes usa de duas a dez réplicas da API conectadas a uma instância PostgreSQL, todas no mesmo nó kind. Não é uma configuração pronta para exposição pública nem oferece alta disponibilidade do banco ou entre nós.
 
 Etapas futuras, ainda não implementadas:
 
 1. **Evoluir o acesso Kubernetes:** hoje usamos port-forward temporário; acesso HTTP por um controlador será uma etapa separada, se autorizada.
-2. **Preparar escalabilidade PostgreSQL:** migração concluída; medir recursos e orçamento de conexões antes de aumentar réplicas. Não compartilhar SQLite entre vários Pods como solução de escalabilidade.
-3. **Escalabilidade:** réplicas, HPA e testes de carga após a migração.
+2. **Aprofundar capacidade:** migração, dez réplicas e HPA local implementados; continuar medindo gargalos e orçamento de conexões com carga representativa.
+3. **Produção:** separar clientes de carga, distribuir nós e definir disponibilidade, segurança e recuperação conforme requisitos reais.
 4. **Monitoramento:** métricas HTTP, latência e taxa de erros via Prometheus; dashboards e alertas no Grafana.
 5. **Observabilidade:** centralizar logs JSON e correlacionar request IDs entre serviços, com Loki. Ainda não há Prometheus, Grafana ou Loki nesta etapa.
 6. **CI:** builds, testes e verificações de segurança no GitHub Actions.

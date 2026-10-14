@@ -4,9 +4,12 @@ metadata:
   name: backend
   namespace: infralab
 spec:
-  replicas: 2
+  # HPA controla replicas; em instalação nova, aguarde HPA antes de testar carga.
   strategy:
-    type: Recreate
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       app: backend
@@ -24,6 +27,10 @@ spec:
       - name: backend
         image: infralab-backend:0.2.1
         imagePullPolicy: Never
+        lifecycle:
+          preStop:
+            exec:
+              command: [node, -e, "setTimeout(() => {}, 5000)"]
         ports:
          - name: http
            containerPort: 3000
