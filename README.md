@@ -124,9 +124,13 @@ O Compose principal permanece com SQLite, selecionado por padrão. Para testar P
 
 Antes de Prometheus, concluiremos escala/carga/HPA e criaremos guias/implementacao/ com Markdown numerado, comandos, exemplos de código/YAML, validação e conexões entre Docker, Nginx, API, banco e Kubernetes.
 
+### Backup e restauração validados
+
+O backup PostgreSQL fica em `.backups/postgres/`, fora do kind e ignorado pelo Git. A restauração em um banco separado foi testada: uma tarefa conferiu em ID, título e estado, preservando o banco original. Execute `bash scripts/backup-postgres.sh` e siga [o guia de restauração](docs/BACKUP-RESTAURACAO.md). A cópia local protege contra perda do cluster; proteção contra perda do computador requer armazenamento externo.
+
 ## Evolução e limites
 
-Este laboratório publica HTTP somente em `127.0.0.1`, não tem autenticação e usa uma única instância da API. O SQLite síncrono mantém o exemplo pequeno. Não é uma configuração pronta para exposição pública.
+Este laboratório usa acesso local e não tem autenticação. O Compose mantém uma API com SQLite; o Kubernetes usa duas réplicas da API conectadas a uma instância PostgreSQL. Não é uma configuração pronta para exposição pública nem oferece alta disponibilidade do banco.
 
 Etapas futuras, ainda não implementadas:
 

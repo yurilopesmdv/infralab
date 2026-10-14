@@ -9,3 +9,4 @@ coverage/
 *.db-shm
 *.sqlite*
 .vscode
+.backups/
