@@ -9,7 +9,7 @@
 - [ ] 7. Observabilidade: Prometheus, Grafana, métricas HTTP, logs JSON, requestId e Loki.
 - [ ] 8. CI no GitHub Actions, scans, documentação e demonstração.
 
-Cada módulo deve ter comandos, explicações, validação e commit Git em branch própria, seguindo Conventional Commits e a identidade configurada pelo usuário. Push e merge dependem de autorização.
+Cada módulo deve ter comandos, explicações, validação e commit Git em branch própria, seguindo Conventional Commits. Push e merge dependem de autorização.
 
 A aplicação via Compose está validada. A API usa HTTP nativo do Node.js, sem Express, para reduzir dependências.
 

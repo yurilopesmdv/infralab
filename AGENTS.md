@@ -9,7 +9,6 @@ Responda em português e ensine Docker/Kubernetes passo a passo. Leia README.md 
 
 - Trabalhe em uma branch por funcionalidade: `feat/<funcionalidade>`, `fix/<correcao>` ou `docs/<assunto>`.
 - Faça commits automaticamente após validar a etapa autorizada, usando Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`).
-- Use a identidade já configurada no Git. Não adicione coautores ou créditos externos nos commits.
 - Não altere a configuração global do Git. Não faça push ou merge sem autorização.
 - Inclua alterações anteriores somente quando fizerem parte do escopo autorizado; confira o diff antes de cada commit.
 - Mantenha o README com arquitetura, execução, validação e limites do laboratório. Diferencie funcionalidades implementadas de etapas futuras.

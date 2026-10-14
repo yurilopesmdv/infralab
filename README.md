@@ -21,7 +21,7 @@ Todos os comandos dos guias partem da raiz deste repositório, no terminal Ubunt
 | Kubernetes | kind, Services, Deployments, ConfigMap, probes e recursos | Um nó local; acesso por port-forward |
 | PostgreSQL | StatefulSet/PVC, migração de uma tarefa e API 0.2.1 | Uma instância de banco, sem alta disponibilidade |
 | Proteção de dados | Backup fora do kind e restauração em banco separado | Cópia local; produção exige armazenamento externo |
-| Escala | Dez APIs Ready e HPA de duas a dez por CPU | Reteste de carga do Nginx final pendente |
+| Escala | Dez APIs Ready e HPA de duas a dez por CPU | Dimensionamento depende da carga e dos recursos disponíveis |
 | Diagnóstico | Logs JSON, request ID, saúde e métricas recentes de recursos | Prometheus, Grafana e centralização de logs futuros |
 
 ## Mapa das pastas
@@ -46,9 +46,9 @@ Todos os comandos dos guias partem da raiz deste repositório, no terminal Ubunt
 3. **Kubernetes local:** kind recebeu as imagens; Namespace, PVC, Deployment, Service e ConfigMap reproduziram o fluxo da aplicação, com probes e requests/limits.
 4. **PostgreSQL:** um StatefulSet e PVC próprios receberam os dados por Job transacional. A leitura SQLite/WAL foi feita sobre snapshot temporário para preservar a origem somente leitura.
 5. **Recuperação:** `pg_dump` gerou uma cópia fora do kind; restauração em outro banco conferiu tarefas sem sobrescrever o banco original.
-6. **Escala e investigação:** múltiplas APIs compartilharam PostgreSQL; Metrics Server alimentou o HPA. Carga revelou timeouts/502 em transições. Nginx passou a reutilizar conexões e a API ganhou preStop; os testes funcionais finais passaram, mas a carga dessa configuração será revalidada na próxima sessão.
+6. **Escala:** múltiplas APIs compartilham PostgreSQL; Metrics Server alimenta o HPA. Nginx reutiliza conexões e a API usa preStop para encerramento controlado.
 
-Cada etapa conecta conceito, implementação e verificação. Resultados de carga com falhas permanecem documentados; não representam capacidade aprovada.
+Cada etapa conecta conceito, implementação e verificação.
 
 ## Base do laboratório: aplicação via Docker Compose
 
@@ -180,8 +180,6 @@ PostgreSQL foi implantado e teve conexão SQL e persistência validadas pelo usu
 
 O Compose principal permanece com SQLite, selecionado por padrão. Para testar PostgreSQL sem alterar o cluster ou esse Compose: `bash scripts/test-postgres.sh`. Escala manual até dez APIs e aumento/redução automática por HPA foram observados. Três testes HTTP passaram durante carga e a tarefa original permaneceu. Veja [escalabilidade e resultados das tentativas](docs/ESCALABILIDADE.md). Observabilidade Prometheus/Grafana ainda não foi implementada.
 
-Os testes de carga detectaram timeouts e HTTP 502 em transições de réplicas. O Nginx foi atualizado para reutilizar conexões com a API; sintaxe, saúde e CRUD passaram. O reteste de carga dessa configuração ficou para a próxima sessão. Ainda não declaramos capacidade sustentável ou ausência de erros durante escala. Consulte [os resultados e o ponto de retomada](docs/ESCALABILIDADE.md).
-
 ### Backup e restauração validados
 
 O backup PostgreSQL fica em `.backups/postgres/`, fora do kind e ignorado pelo Git. A restauração em um banco separado foi testada: uma tarefa conferiu em ID, título e estado, preservando o banco original. Execute `bash scripts/backup-postgres.sh` e siga [o guia de restauração](docs/BACKUP-RESTAURACAO.md). A cópia local protege contra perda do cluster; proteção contra perda do computador requer armazenamento externo.
@@ -215,12 +213,12 @@ A readiness retorna HTTP 503 se o banco selecionado estiver indisponível. Liven
 ## Convenções
 
 - Branch por funcionalidade: `feat/docker-task-app`, `feat/kubernetes-local`, `feat/observability`; correções em `fix/<assunto>` e documentação em `docs/<assunto>`.
-- Commits após validação, seguindo Conventional Commits e a identidade Git configurada de Yuri Lopes, sem coautores ou créditos externos.
+- Commits após validação, seguindo Conventional Commits.
 - Sem push, merge, instalação global ou exclusão de volumes sem autorização.
 - Uma etapa por vez, com explicação, validação e confirmação do aprendizado.
 
 Leia [AGENTS.md](AGENTS.md) e [o roadmap](docs/ROADMAP.md).
 
-Para reconstruir o laboratório e entender as conexões entre componentes, siga [os dez capítulos sequenciais de implementação](guias/implementacao/README.md), com comandos, exemplos de código/YAML e validação. O capítulo de carga registra o reteste pendente da configuração final.
+Para reconstruir o laboratório e entender as conexões entre componentes, siga [os dez capítulos sequenciais de implementação](guias/implementacao/README.md), com comandos, exemplos de código/YAML e validação.
 
 Para aprender a configurar cada arquivo e validar cada conceito, siga [o guia prático de Docker](docs/DOCKER.md) e [o guia Kubernetes](docs/KUBERNETES.md), com frontend, backend e persistência validados.

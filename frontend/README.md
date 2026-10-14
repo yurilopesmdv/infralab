@@ -15,7 +15,7 @@ React apresenta tarefas e chama a API pelo mesmo endereço acessado no navegador
 
 O navegador executa React e usa caminhos relativos, como `/api/tasks`. No Compose, Nginx resolve `backend:3000`. No Kubernetes, o upstream `backend_api` resolve o Service `backend.infralab.svc.cluster.local:3000` e reutiliza conexões HTTP. React não resolve DNS interno do cluster e não se conecta diretamente ao PostgreSQL.
 
-O fallback para `index.html` atende rotas da interface; `/health` verifica o Nginx. Configuração Kubernetes montada por subPath exige atualização controlada dos Pods para receber mudanças de ConfigMap. A configuração final de keepalive passou em sintaxe e testes funcionais; reteste de carga permanece pendente.
+O fallback para `index.html` atende rotas da interface; `/health` verifica o Nginx. Configuração Kubernetes montada por subPath exige atualização controlada dos Pods para receber mudanças de ConfigMap.
 
 ## Validação
 

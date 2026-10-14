@@ -30,6 +30,6 @@ Docker deve mostrar cliente e servidor. Se o servidor não responder, confira Do
 
 ## Fluxo de trabalho
 
-Leia [as regras do projeto](../AGENTS.md) e [o roadmap](ROADMAP.md). Use branch por funcionalidade, confira o diff e faça commit após validar o escopo. A identidade Git já está configurada; não altere configuração global. O repositório já está inicializado: não repita comandos de criação, renomeação de branch ou cadastro de remote.
+Leia [as regras do projeto](../AGENTS.md) e [o roadmap](ROADMAP.md). Use branch por funcionalidade, confira o diff e faça commit após validar o escopo. Não altere configuração global do Git. O repositório já está inicializado: não repita comandos de criação, renomeação de branch ou cadastro de remote.
 
 Push e merge devem ser ações autorizadas. Ao retomar trabalho, confira a branch atual e as pendências antes de executar alterações. Para aprender o ambiente em sequência, siga [o capítulo 01](../guias/implementacao/01-ambiente.md).
