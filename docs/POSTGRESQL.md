@@ -138,6 +138,19 @@ A tabela `infralab_persistence_check` da aula não é alterada pela migração. 
 
 ## Recuperação e limites
 
+### Diagnosticar uma falha sem repetir a cópia
+
+Se o Job retornar a mensagem genérica de falha, mantenha a API parada e preserve os volumes. O Pod opcional `k8s/diagnostics/migration-check-pod.yaml` usa a imagem 0.2.0, as referências do Secret e o SQLite somente leitura. Ele consulta a origem e executa SELECT no PostgreSQL, sem migrar dados nem imprimir senha ou títulos das tarefas.
+
+```bash
+kubectl --context kind-infralab apply --dry-run=server -f k8s/diagnostics/migration-check-pod.yaml
+kubectl --context kind-infralab apply -f k8s/diagnostics/migration-check-pod.yaml
+kubectl --context kind-infralab get pod migration-check -n infralab
+kubectl --context kind-infralab logs pod/migration-check -n infralab
+```
+
+Se o container ainda estiver iniciando, repita a consulta de logs após alguns segundos. As etapas `sqlite` e `postgres` mostram separadamente sucesso ou erro com código e mensagem; a senha é removida caso conste na mensagem. Consulte os logs tanto em Succeeded quanto em Error. Não exclua o Job anterior nem execute novamente a migração antes de analisar o resultado.
+
 Antes de novas escritas PostgreSQL, se a troca falhar, a configuração antiga está em `k8s/legacy/backend-sqlite-deployment.yaml`. Aplique-a somente após investigar e confirmar a recuperação. Ela restaura a API 0.1.0 usando o SQLite preservado. Depois de escritas no PostgreSQL, voltar ao SQLite não transfere essas alterações: exige reconciliar os dados primeiro. Não apague o PVC antigo nesta etapa.
 
 Uma réplica PostgreSQL em armazenamento local do kind não oferece alta disponibilidade nem backup. O usuário do laboratório é o usuário de inicialização do banco; produção deve separar administração, migração e permissões da aplicação, usar TLS e gerenciar segredos. Cinco conexões por API não tornam dez réplicas automaticamente adequadas: mediremos capacidade, requests/limits e orçamento de conexões antes de escalar.

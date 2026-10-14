@@ -1,0 +1,93 @@
+# Apenas diagnóstico: consulta a origem e o destino sem copiar nem modificar dados.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: migration-check
+  namespace: infralab
+spec:
+  restartPolicy: Never
+  activeDeadlineSeconds: 120
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+  containers:
+    - name: check
+      image: infralab-backend:0.2.0
+      imagePullPolicy: Never
+      command: [node, --input-type=module, -e]
+      args:
+        - |
+          import { readdirSync } from 'node:fs';
+          import { DatabaseSync } from 'node:sqlite';
+          import { createPool } from '/app/dist/postgres.js';
+          let failed = false;
+          async function check(stage, action) {
+            try {
+              const result = await action();
+              console.log(JSON.stringify({ stage, status: 'ok', ...result }));
+            } catch (error) {
+              failed = true;
+              let message = error instanceof Error ? error.message : 'Erro desconhecido';
+              const password = process.env.PGPASSWORD;
+              if (password) message = message.split(password).join('[REDACTED]');
+              console.error(JSON.stringify({ stage, status: 'error', code: error?.code, message }));
+            }
+          }
+          await check('sqlite', async () => {
+            console.log(JSON.stringify({ stage: 'sqlite-files', files: readdirSync('/source') }));
+            const db = new DatabaseSync('/source/tasks.db', { readOnly: true });
+            try {
+              const rows = db.prepare('SELECT id, title, done FROM tasks ORDER BY id').all();
+              return { tasks: rows.length };
+            } finally { db.close(); }
+          });
+          const pool = createPool();
+          try {
+            await check('postgres', async () => {
+              const result = await pool.query("SELECT current_database() AS database, to_regclass('public.tasks') IS NOT NULL AS tasks_table");
+              return result.rows[0];
+            });
+          } finally { await pool.end(); }
+          process.exitCode = failed ? 1 : 0;
+      env:
+        - name: PGHOST
+          value: postgres.infralab.svc.cluster.local
+        - name: PGPORT
+          value: "5432"
+        - name: PGUSER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: username
+        - name: PGDATABASE
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: database
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: password
+      volumeMounts:
+        - name: sqlite-source
+          mountPath: /source
+          readOnly: true
+      resources:
+        requests:
+          cpu: 100m
+          memory: 64Mi
+        limits:
+          cpu: 500m
+          memory: 256Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
+  volumes:
+    - name: sqlite-source
+      persistentVolumeClaim:
+        claimName: sqlite-data
+        readOnly: true
