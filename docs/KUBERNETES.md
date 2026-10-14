@@ -109,7 +109,7 @@ Requests orientam agendamento; limits limitam consumo. HPA ficará para depois d
 
 ## Etapas seguintes
 
-PostgreSQL já foi implantado e sua persistência validada. A API e o Job de migração estão preparados, mas a troca do banco da aplicação no cluster ainda precisa ser executada pelo usuário. Siga [o guia PostgreSQL](POSTGRESQL.md) antes de aplicar o Deployment backend atualizado. A referência SQLite foi preservada em `k8s/legacy/`; não aplique essa pasta junto com os manifests atuais.
+PostgreSQL está implantado e sua persistência foi validada. A migração concluiu a cópia de uma tarefa pelo Job sqlite-to-postgres-v2; a API 0.2.1 usa PostgreSQL e o fluxo completo passou nos testes HTTP do cluster. Siga [o guia PostgreSQL](POSTGRESQL.md) para reproduzir a transição. A referência SQLite foi preservada em `k8s/legacy/`; não aplique essa pasta junto com os manifests atuais.
 
 Migrar para PostgreSQL antes de escalar escrita. Só então aumentar réplicas e estudar HPA. Depois instrumentar métricas HTTP e instalar Prometheus/Grafana, incluindo latência, taxa de erros, alertas e correlação com logs JSON. Cada etapa terá seu próprio guia, branch, testes e commit.
 

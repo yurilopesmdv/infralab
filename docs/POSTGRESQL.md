@@ -2,7 +2,9 @@
 
 ## Estado desta etapa
 
-O usuário implantou PostgreSQL 17.11 com Service headless, StatefulSet e PVC próprios. Conexão autenticada, SQL e persistência após substituição do Pod foram validados. A imagem da API 0.2.1 e o Job de migração estão preparados e testados em Docker isolado. **A cópia das tarefas e a troca da API no cluster ainda dependem da execução dos passos abaixo pelo usuário.** Não escalar a API antes de validar a migração.
+O usuário implantou PostgreSQL 17.11 com Service headless, StatefulSet e PVC próprios. Conexão autenticada, SQL e persistência após substituição do Pod foram validados. Com autorização explícita para execução pelo assistente, o Job `sqlite-to-postgres-v2` concluiu a migração de uma tarefa e a API 0.2.1 foi implantada. Readiness retornou `database: postgres`; o frontend listou a tarefa original e três testes HTTP passaram no cluster. Treze testes isolados também passaram. **A migração está concluída; os passos abaixo documentam como reproduzi-la em outro ambiente.** Aumento de réplicas e HPA ainda não foram executados.
+
+O Job antigo Failed e o Pod de diagnóstico Error foram preservados para histórico. Esses estados descrevem tentativas já encerradas; frontend, backend e PostgreSQL atuais estão Running 1/1. O PVC original SQLite permanece preservado.
 
 O Compose principal continua com SQLite. Os bancos Compose, SQLite Kubernetes e PostgreSQL Kubernetes são distintos. Só o SQLite Kubernetes será copiado por este Job.
 

@@ -103,7 +103,7 @@ Os Dockerfiles copiam as dependências antes do código: alterações no código
 
 ## Aplicação no Kubernetes local
 
-O backend já foi implantado no cluster kind `infralab`, com uma réplica, Deployment `Recreate`, PVC `sqlite-data`, Service interno, probes e limites de recursos. Os manifests estão em `k8s/`. A saúde da API e a criação de tarefas foram validadas; a tarefa permaneceu após substituir o Pod.
+O backend está implantado no cluster kind `infralab`, com uma réplica, Deployment `Recreate`, Service interno, probes e limites de recursos. A API 0.2.1 usa PostgreSQL, executado em StatefulSet com PVC próprio. O PVC `sqlite-data` da etapa anterior permanece preservado, sem montagem na API atual. Os manifests estão em `k8s/`.
 
 O frontend também está implantado com Deployment, Service e ConfigMap Nginx. A configuração encaminha `/api/` para `backend.infralab.svc.cluster.local:3000`, usando o endereço estável do Service. O selector `app: backend` identifica os Pods da API; não é o endereço utilizado pelo navegador.
 
@@ -116,9 +116,9 @@ Abra http://localhost:8081. No segundo terminal: `curl --fail -sS http://localho
 
 O banco Kubernetes é separado do Compose. O armazenamento local do kind não garante persistência após excluir o cluster. Consulte [o guia Kubernetes](docs/KUBERNETES.md).
 
-### Migração PostgreSQL preparada
+### Migração PostgreSQL concluída
 
-PostgreSQL já foi implantado e teve conexão SQL e persistência validadas pelo usuário. A API 0.2.1 suporta PostgreSQL com o driver `pg`, e há um Job para copiar as tarefas do SQLite preservando IDs, estados e origem. O código foi testado em ambiente Docker isolado; a execução do Job e a troca da API no cluster continuam pendentes. **Não aplique o Deployment atualizado antes de copiar os dados.** Siga [o guia de migração PostgreSQL](docs/POSTGRESQL.md).
+PostgreSQL foi implantado e teve conexão SQL e persistência validadas pelo usuário. O Job `sqlite-to-postgres-v2` copiou uma tarefa, preservando ID, estado e origem SQLite. A API 0.2.1 está em execução com PostgreSQL; readiness retornou `database: postgres` e três testes HTTP passaram pelo frontend, cobrindo CRUD e saúde. O código também passou em 13 testes isolados. Para reproduzir a migração, siga [o guia PostgreSQL](docs/POSTGRESQL.md) e aplique o Deployment atualizado somente após copiar os dados.
 
 O Compose principal permanece com SQLite, selecionado por padrão. Para testar PostgreSQL sem alterar o cluster ou esse Compose: `bash scripts/test-postgres.sh`. HPA, dez réplicas e observabilidade ainda não foram implementados.
 
@@ -129,7 +129,7 @@ Este laboratório publica HTTP somente em `127.0.0.1`, não tem autenticação e
 Etapas futuras, ainda não implementadas:
 
 1. **Evoluir o acesso Kubernetes:** hoje usamos port-forward temporário; acesso HTTP por um controlador será uma etapa separada, se autorizada.
-2. **Concluir migração PostgreSQL no cluster:** executar o Job de cópia e validar a API 0.2.1, antes de escalar escrita. Não compartilhar SQLite entre vários Pods como solução de escalabilidade.
+2. **Preparar escalabilidade PostgreSQL:** migração concluída; medir recursos e orçamento de conexões antes de aumentar réplicas. Não compartilhar SQLite entre vários Pods como solução de escalabilidade.
 3. **Escalabilidade:** réplicas, HPA e testes de carga após a migração.
 4. **Monitoramento:** métricas HTTP, latência e taxa de erros via Prometheus; dashboards e alertas no Grafana.
 5. **Observabilidade:** centralizar logs JSON e correlacionar request IDs entre serviços, com Loki. Ainda não há Prometheus, Grafana ou Loki nesta etapa.
