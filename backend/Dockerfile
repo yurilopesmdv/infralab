@@ -21,4 +21,4 @@ CMD ["node", "dist/server.js"]
 
 FROM runtime AS test
 COPY --chown=node:node tests ./tests
-CMD ["node", "--test", "--test-concurrency=1", "tests/app.test.mjs", "tests/postgres.test.mjs", "tests/sqlite.test.mjs"]
+CMD ["node", "--test", "--test-concurrency=1", "tests/app.test.mjs", "tests/postgres.test.mjs", "tests/sqlite.test.mjs", "tests/metrics.test.mjs"]

@@ -56,10 +56,14 @@ Antes de migrar, faça a sequência completa de [docs/POSTGRESQL.md](../../docs/
 ```bash
 kubectl --context kind-infralab scale deployment/backend --replicas=0 -n infralab
 kubectl --context kind-infralab wait --for=delete pod -l app=backend -n infralab --timeout=120s
-kubectl --context kind-infralab apply -f k8s/migrations/sqlite-to-postgres-job.yaml
+sed 's/infralab-backend:0.2.1/infralab-backend:0.3.0/' k8s/migrations/sqlite-to-postgres-job.yaml > /tmp/infralab-migration.yaml
+kubectl --context kind-infralab apply --dry-run=server -f /tmp/infralab-migration.yaml
+kubectl --context kind-infralab apply -f /tmp/infralab-migration.yaml
 kubectl --context kind-infralab wait --for=condition=complete job/sqlite-to-postgres-v2 -n infralab --timeout=300s
 kubectl --context kind-infralab logs job/sqlite-to-postgres-v2 -n infralab
 ```
+
+O arquivo de migração original registra a imagem histórica 0.2.1. A cópia temporária acima altera somente a imagem para 0.3.0, construída no capítulo 05, sem reescrever o histórico. Use essa reprodução somente num laboratório novo com origem SQLite; no cluster atual a migração já terminou.
 
 Esta sequência presume HPA ainda ausente. Se houver autoscaler, ele pode recriar réplicas: planeje uma manutenção própria antes de congelar escritores. No fluxo deste guia, o HPA só aparece no capítulo 09.
 

@@ -1,9 +1,19 @@
 {
   "name": "infralab-backend",
   "private": true,
-  "version": "0.2.1",
+  "version": "0.3.0",
   "type": "module",
-  "scripts": { "build": "tsc", "start": "node dist/server.js" },
-  "dependencies": { "pg": "8.23.1" },
-  "devDependencies": { "@types/node": "24.10.1", "@types/pg": "8.15.6", "typescript": "5.9.3" }
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@prometheus-io/client": "0.16.1",
+    "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "@types/pg": "8.15.6",
+    "typescript": "5.9.3"
+  }
 }

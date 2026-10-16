@@ -10,10 +10,11 @@ Os [guias sequenciais](../guias/implementacao/README.md) ensinam a implementaç�
 | [POSTGRESQL.md](POSTGRESQL.md) | Secret, StatefulSet, migração, snapshot WAL e recuperação |
 | [BACKUP-RESTAURACAO.md](BACKUP-RESTAURACAO.md) | Dump fora do kind e restauração em banco separado |
 | [ESCALABILIDADE.md](ESCALABILIDADE.md) | HPA, dimensionamento e procedimentos de carga |
+| [OBSERVABILIDADE.md](OBSERVABILIDADE.md) | Arquitetura, configuração, validação e limites de Prometheus/Grafana |
 | [ROADMAP.md](ROADMAP.md) | Etapas concluídas e trabalho pendente |
 
 O estado atual usa PostgreSQL e HPA. Não interprete manifests/comandos históricos SQLite como uma orientação para trocar o banco atual. Em caso de divergência, confira estado atual, seção de retomada e arquivo real antes de executar mudanças.
 
-Prometheus/Grafana serão uma etapa posterior.
+Prometheus/Grafana estão implantados; Loki e notificações externas continuam futuros.
 
 Voltar ao [projeto](../README.md) ou começar pelo [glossário](../guias/implementacao/00-visao-geral-e-glossario.md).

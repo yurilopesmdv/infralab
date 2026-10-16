@@ -1,5 +1,7 @@
 # Migrar a API de SQLite para PostgreSQL
 
+Este documento registra a migração com a imagem histórica 0.2.1. Para reproduzir com o código atual, use [o capítulo 07](../guias/implementacao/07-postgres-migracao.md), que prepara a imagem 0.3.0 sem sobrescrever tags antigas.
+
 ## Estado desta etapa
 
 PostgreSQL 17.11 foi implantado com Service headless, StatefulSet e PVC próprios. Conexão autenticada, SQL e persistência após substituição do Pod foram validados. O Job `sqlite-to-postgres-v2` concluiu a migração de uma tarefa e a API 0.2.1 foi implantada. Readiness retornou `database: postgres`; o frontend listou a tarefa original e três testes HTTP passaram no cluster. Treze testes isolados também passaram. **A migração está concluída; os passos abaixo documentam como reproduzi-la em outro ambiente.** Escala e HPA foram estudados posteriormente; veja [o capítulo de escala](ESCALABILIDADE.md).

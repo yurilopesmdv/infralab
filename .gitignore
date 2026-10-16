@@ -10,3 +10,4 @@ coverage/
 *.sqlite*
 .vscode
 .backups/
+.secrets/

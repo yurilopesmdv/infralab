@@ -10,6 +10,7 @@ Execute pela raiz do repositório, no Ubuntu WSL. Shell orquestra ferramentas; t
 | `bash scripts/backup-postgres.sh` | Gera dump PostgreSQL fora do kind, com checksum e permissões restritas |
 | `bash scripts/verify-postgres-restore.sh CAMINHO.dump` | Confere checksum, restaura em banco novo e compara tarefas; preserva banco de teste |
 | [load-http.mjs](load-http.mjs) | Gerador de leituras Node, duração/concorrência/taxa limitadas e erros classificados |
+| [verify-observability.mjs](verify-observability.mjs) | Testes Node da descoberta, métricas, regras e saúde Grafana, executados dentro da API |
 
 O gerador roda em Job separado com [k8s/load-job.yaml](../k8s/load-job.yaml). O script precisa estar na ConfigMap load-http-script. O manifesto final define alvo aproximado de 200 operações/s, concorrência máxima oito e duração de 60 segundos. `REQUESTS_PER_SECOND=0` remove limite de taxa; use-o somente para um teste de estresse planejado.
 

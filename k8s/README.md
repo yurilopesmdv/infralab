@@ -18,6 +18,7 @@ Esta pasta contém fases distintas do laboratório. Não use `kubectl apply -f k
 | [diagnostics/](diagnostics/) | Diagnóstico da tentativa original de migração |
 | [metrics-server/](metrics-server/README.md) | Manifest oficial e patch local para métricas de recursos |
 | [backend-hpa.yaml](backend-hpa.yaml) | Autoscaling por CPU, de duas a dez APIs |
+| [observability/](observability/README.md) | Prometheus/Grafana com descoberta por Pod, PVCs e provisionamento |
 | [load-job.yaml](load-job.yaml) | Job finito de leituras, usando script montado de ConfigMap |
 
 ## Ordem num laboratório novo

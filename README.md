@@ -19,10 +19,10 @@ Todos os comandos dos guias partem da raiz deste repositório, no terminal Ubunt
 |---|---|---|
 | Docker Compose | React/Nginx, API, SQLite em volume e testes funcionais | Uma API; banco separado do Kubernetes |
 | Kubernetes | kind, Services, Deployments, ConfigMap, probes e recursos | Um nó local; acesso por port-forward |
-| PostgreSQL | StatefulSet/PVC, migração de uma tarefa e API 0.2.1 | Uma instância de banco, sem alta disponibilidade |
+| PostgreSQL | StatefulSet/PVC, migração de uma tarefa e API 0.3.0 | Uma instância de banco, sem alta disponibilidade |
 | Proteção de dados | Backup fora do kind e restauração em banco separado | Cópia local; produção exige armazenamento externo |
 | Escala | Dez APIs Ready e HPA de duas a dez por CPU | Dimensionamento depende da carga e dos recursos disponíveis |
-| Diagnóstico | Logs JSON, request ID, saúde e métricas recentes de recursos | Prometheus, Grafana e centralização de logs futuros |
+| Observabilidade | Prometheus por Pod, métricas HTTP, dashboard Grafana e regras locais | Centralização de logs e notificações externas futuras |
 
 ## Mapa das pastas
 
@@ -31,8 +31,9 @@ Todos os comandos dos guias partem da raiz deste repositório, no terminal Ubunt
 | [backend/](backend/README.md) | API Node.js/TypeScript, contrato HTTP, drivers, migração e testes |
 | [frontend/](frontend/README.md) | React compilado, Nginx, proxy e relação com a API |
 | [k8s/](k8s/README.md) | Manifests, ordem de aplicação e ligação entre recursos |
+| [k8s/observability/](k8s/observability/README.md) | Prometheus, Grafana, dashboard e provisionamento |
 | [scripts/](scripts/README.md) | Diagnóstico, testes, backup, restauração e gerador de carga |
-| [guias/implementacao/](guias/implementacao/README.md) | Glossário e dez capítulos com comandos, exemplos e validação |
+| [guias/implementacao/](guias/implementacao/README.md) | Glossário e capítulos com comandos, exemplos e validação |
 | [docs/](docs/README.md) | Documentação operacional, decisões e resultados medidos |
 | [compose.yaml](compose.yaml) | Serviços da execução inicial, rede, volume e recursos |
 | [compose.postgres-test.yaml](compose.postgres-test.yaml) | Ambiente isolado para testes PostgreSQL |
@@ -151,7 +152,7 @@ Os Dockerfiles copiam as dependências antes do código: alterações no código
 
 ## Aplicação no Kubernetes local
 
-O backend está implantado no cluster kind `infralab`, com Deployment `RollingUpdate`, Service interno, probes e limites de recursos. O HPA controla entre duas e dez réplicas por CPU, usando Metrics Server. A API 0.2.1 usa PostgreSQL, executado em StatefulSet com PVC próprio. O PVC `sqlite-data` da etapa anterior permanece preservado, sem montagem na API atual. Os manifests estão em `k8s/`.
+O backend está implantado no cluster kind `infralab`, com Deployment `RollingUpdate`, Service interno, probes e limites de recursos. O HPA controla entre duas e dez réplicas por CPU, usando Metrics Server. A API 0.3.0 usa PostgreSQL, executado em StatefulSet com PVC próprio. O PVC `sqlite-data` da etapa anterior permanece preservado, sem montagem na API atual. Os manifests estão em `k8s/`.
 
 ```text
 Navegador → localhost:8081 → port-forward → Service frontend → Nginx/React
@@ -176,13 +177,31 @@ O banco Kubernetes é separado do Compose. O armazenamento local do kind não ga
 
 ### Migração PostgreSQL concluída
 
-PostgreSQL foi implantado e teve conexão SQL e persistência validadas pelo usuário. O Job `sqlite-to-postgres-v2` copiou uma tarefa, preservando ID, estado e origem SQLite. A API 0.2.1 está em execução com PostgreSQL; readiness retornou `database: postgres` e três testes HTTP passaram pelo frontend, cobrindo CRUD e saúde. O código também passou em 13 testes isolados. Para reproduzir a migração, siga [o guia PostgreSQL](docs/POSTGRESQL.md) e aplique o Deployment atualizado somente após copiar os dados.
+PostgreSQL foi implantado e teve conexão SQL e persistência validadas pelo usuário. O Job `sqlite-to-postgres-v2` copiou uma tarefa, preservando ID, estado e origem SQLite. A API 0.2.1 foi implantada com PostgreSQL após a migração; readiness retornou `database: postgres` e três testes HTTP passaram pelo frontend, cobrindo CRUD e saúde. O código também passou em 13 testes isolados. Para reproduzir a migração, siga [o guia PostgreSQL](docs/POSTGRESQL.md) e aplique o Deployment atualizado somente após copiar os dados.
 
-O Compose principal permanece com SQLite, selecionado por padrão. Para testar PostgreSQL sem alterar o cluster ou esse Compose: `bash scripts/test-postgres.sh`. Escala manual até dez APIs e aumento/redução automática por HPA foram observados. Três testes HTTP passaram durante carga e a tarefa original permaneceu. Veja [escalabilidade e resultados das tentativas](docs/ESCALABILIDADE.md). Observabilidade Prometheus/Grafana ainda não foi implementada.
+O Compose principal permanece com SQLite, selecionado por padrão. Para testar PostgreSQL sem alterar o cluster ou esse Compose: `bash scripts/test-postgres.sh`. Escala manual até dez APIs e aumento/redução automática por HPA foram observados. Três testes HTTP passaram durante carga e a tarefa original permaneceu. Veja [escalabilidade e resultados das tentativas](docs/ESCALABILIDADE.md). Prometheus/Grafana estão implantados; veja [a documentação de observabilidade](docs/OBSERVABILIDADE.md).
 
 ### Backup e restauração validados
 
 O backup PostgreSQL fica em `.backups/postgres/`, fora do kind e ignorado pelo Git. A restauração em um banco separado foi testada: uma tarefa conferiu em ID, título e estado, preservando o banco original. Execute `bash scripts/backup-postgres.sh` e siga [o guia de restauração](docs/BACKUP-RESTAURACAO.md). A cópia local protege contra perda do cluster; proteção contra perda do computador requer armazenamento externo.
+
+## Prometheus e Grafana
+
+A API 0.3.0 expõe contadores HTTP e histograma de duração em `/metrics`. Prometheus descobre cada Pod Ready, coleta a cada 15 segundos e guarda séries em PVC. Grafana recebe fonte de dados e dashboard por arquivos: tráfego, respostas 5xx, p95, targets coletados e recursos dos processos. Logs JSON e request ID continuam disponíveis.
+
+Em terminais separados, na raiz do projeto:
+
+```bash
+kubectl --context kind-infralab port-forward -n infralab service/prometheus 9090:9090
+```
+
+```bash
+kubectl --context kind-infralab port-forward -n infralab service/grafana 3002:3000
+```
+
+Abra Prometheus em http://localhost:9090 e Grafana em http://localhost:3002. No Grafana, use `admin` e a senha privada de `.secrets/grafana-admin-password`; o arquivo é ignorado pelo Git. Abra **InfraLab → InfraLab — HTTP e processos** em Dashboards. A instalação inicial e o Secret estão explicados nos guias.
+
+Estude [11 — Prometheus](guias/implementacao/11-prometheus.md) e [12 — Grafana](guias/implementacao/12-grafana.md). Para checar a stack: `kubectl --context kind-infralab exec -i -n infralab deployment/backend -- node --input-type=module < scripts/verify-observability.mjs`. Regras de alerta são avaliadas localmente, sem envio de notificações.
 
 ## Evolução e limites
 
@@ -193,22 +212,23 @@ Etapas futuras, ainda não implementadas:
 1. **Evoluir o acesso Kubernetes:** hoje usamos port-forward temporário; acesso HTTP por um controlador será uma etapa separada, se autorizada.
 2. **Aprofundar capacidade:** migração, dez réplicas e HPA local implementados; continuar medindo gargalos e orçamento de conexões com carga representativa.
 3. **Produção:** separar clientes de carga, distribuir nós e definir disponibilidade, segurança e recuperação conforme requisitos reais.
-4. **Monitoramento:** métricas HTTP, latência e taxa de erros via Prometheus; dashboards e alertas no Grafana.
-5. **Observabilidade:** centralizar logs JSON e correlacionar request IDs entre serviços, com Loki. Ainda não há Prometheus, Grafana ou Loki nesta etapa.
+4. **Ampliar monitoramento:** definir SLOs e encaminhar alertas para notificações externas.
+5. **Logs centralizados:** reunir logs JSON e correlacionar request IDs entre serviços, com Loki, ainda não instalado.
 6. **CI:** builds, testes e verificações de segurança no GitHub Actions.
 
 Em produção também precisaremos de TLS, autenticação, gestão de segredos, backups testados e atualizações das imagens. Health checks são verificações pontuais; observabilidade ajuda a explicar o comportamento do sistema.
 
-### Contrato de saúde e futura instrumentação
+### Contrato de saúde e instrumentação
 
 | Endpoint | Verificação | Uso |
 |---|---|---|
 | `/api/health/live` | Processo HTTP responde | Liveness probe Kubernetes |
 | `/api/health/ready` | Processo responde e consulta o banco selecionado | Health check Docker e readiness probe Kubernetes |
 | `/api/health` | Alias de readiness | Diagnóstico manual |
+| `/metrics` na API | Texto de métricas HTTP e processo | Coleta direta por Pod pelo Prometheus |
 | `/health` no frontend | Nginx responde | Health check do frontend |
 
-A readiness retorna HTTP 503 se o banco selecionado estiver indisponível. Liveness não depende do banco, para evitar reinícios quando uma dependência falha. O Prometheus precisará de um endpoint de métricas separado, a implementar na etapa de observabilidade; não coleta métricas automaticamente desses endpoints JSON.
+A readiness retorna HTTP 503 se o banco selecionado estiver indisponível. Liveness não depende do banco, para evitar reinícios quando uma dependência falha. Prometheus coleta `/metrics`, uma interface de texto separada desses endpoints JSON. Probes e scrapes não entram nos indicadores HTTP de negócio.
 
 ## Convenções
 
@@ -219,6 +239,6 @@ A readiness retorna HTTP 503 se o banco selecionado estiver indisponível. Liven
 
 Leia [AGENTS.md](AGENTS.md) e [o roadmap](docs/ROADMAP.md).
 
-Para reconstruir o laboratório e entender as conexões entre componentes, siga [os dez capítulos sequenciais de implementação](guias/implementacao/README.md), com comandos, exemplos de código/YAML e validação.
+Para reconstruir o laboratório e entender as conexões entre componentes, siga [os capítulos sequenciais de implementação](guias/implementacao/README.md), com comandos, exemplos de código/YAML e validação.
 
 Para aprender a configurar cada arquivo e validar cada conceito, siga [o guia prático de Docker](docs/DOCKER.md) e [o guia Kubernetes](docs/KUBERNETES.md), com frontend, backend e persistência validados.

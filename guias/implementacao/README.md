@@ -14,8 +14,10 @@ Execute comandos na raiz do repositório, no Ubuntu WSL. Estes capítulos explic
 | 07 | [PostgreSQL e migração](07-postgres-migracao.md) | Banco compartilhado para múltiplas APIs |
 | 08 | [Backup e recuperação](08-backup.md) | Cópia fora do cluster e restauração testada |
 | 09 | [Carga e HPA](09-carga-hpa.md) | Escala manual e automática |
-| 10 | [Diagnóstico e próxima etapa](10-diagnostico-observabilidade.md) | Operação e preparação para Prometheus |
+| 10 | [Diagnóstico](10-diagnostico-observabilidade.md) | Operação e conexão com observabilidade |
+| 11 | [Prometheus](11-prometheus.md) | Métricas, coleta por Pod, PromQL e regras locais |
+| 12 | [Grafana](12-grafana.md) | Fonte de dados, dashboard e interpretação |
 
 Há dois caminhos no capítulo 06: reproduzir a aula histórica SQLite, ou implantar PostgreSQL diretamente num laboratório novo. Em um cluster já migrado, preserve o estado atual e use apenas validações. Não reaplique o Deployment SQLite para voltar à origem: novas escritas PostgreSQL não existem nele.
 
-Esta sequência não remove clusters, PVCs, Secrets nem bancos. Instalações e mudanças globais são decisões separadas. Prometheus/Grafana serão o próximo módulo; os endpoints de saúde não substituem métricas.
+Esta sequência não remove clusters, PVCs, Secrets nem bancos. Instalações e mudanças globais são decisões separadas. Prometheus/Grafana são tratados nos capítulos 11 e 12; os endpoints de saúde não substituem métricas.

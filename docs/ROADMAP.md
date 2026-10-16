@@ -6,7 +6,7 @@
 - [ ] 4. Hardening: multi-stage, non-root, health checks, .dockerignore, recursos e secrets.
 - [x] 5. Kubernetes local: kind, kubectl, Pods, Deployments, Services, ConfigMaps e volumes.
 - [x] 6. Migrar para PostgreSQL e escalar a API para 10 réplicas; HPA e testes de carga moderada.
-- [ ] 7. Observabilidade: Prometheus, Grafana, métricas HTTP, logs JSON, requestId e Loki.
+- [ ] 7. Observabilidade: Prometheus, Grafana e métricas HTTP implantados; logs JSON/requestId existentes; centralização Loki futura.
 - [ ] 8. CI no GitHub Actions, scans, documentação e demonstração.
 
 Cada módulo deve ter comandos, explicações, validação e commit Git em branch própria, seguindo Conventional Commits. Push e merge dependem de autorização.
@@ -19,8 +19,10 @@ Módulo 6 concluído para o laboratório: PostgreSQL com StatefulSet/PVC, migra�
 
 Sequência acordada antes de Prometheus: validar escala gradual da API, teste de carga e HPA; depois criar `guias/implementacao/` com arquivos Markdown numerados. Os guias devem ensinar ambiente, arquitetura, frontend React/Nginx, API, SQLite/volumes, Compose/redes, kind, Deployments/Services/ConfigMaps/probes, PostgreSQL/Secret/PVC/migração e escalabilidade. Cada etapa terá comandos explicados, exemplos de código/YAML, validação, resultados esperados e ligação explícita com a etapa anterior e seguinte. Só depois iniciar Prometheus/Grafana. CI permanece uma etapa futura.
 
-Metrics Server 0.8.1 fornece CPU ao HPA, com duas a dez réplicas e alvo de 60%. Nginx usa conexões reutilizadas; API usa RollingUpdate e preStop. Carga moderada estável e durante atualização passou com zero erros e p95 de 2 ms em ambos os cenários. O diagnóstico das tentativas anteriores e o alcance da validação estão em docs/ESCALABILIDADE.md. Prometheus/Grafana continuam futuros.
+Metrics Server 0.8.1 fornece CPU ao HPA, com duas a dez réplicas e alvo de 60%. Nginx usa conexões reutilizadas; API usa RollingUpdate e preStop. Carga moderada estável e durante atualização passou com zero erros e p95 de 2 ms em ambos os cenários. O diagnóstico das tentativas anteriores e o alcance da validação estão em docs/ESCALABILIDADE.md. Prometheus/Grafana foram implantados no módulo seguinte; veja docs/OBSERVABILIDADE.md.
 
 Proteção de dados validada: backup lógico PostgreSQL fora do kind, checksum e restauração em banco separado, com comparação de todas as tarefas. Banco original preservado. Backup local não substitui armazenamento externo, retenção e recuperação testada em produção. Veja docs/BACKUP-RESTAURACAO.md.
 
-Guias concluídos em `guias/implementacao/`: índice e dez capítulos numerados, cobrindo ambiente, API, React/Nginx, imagens/Compose, kind, manifests/probes, PostgreSQL/migração, backup, carga/HPA e diagnóstico. A validação de carga moderada foi concluída; o próximo módulo é observabilidade com Prometheus/Grafana.
+Guias concluídos em `guias/implementacao/`: índice e dez capítulos numerados, cobrindo ambiente, API, React/Nginx, imagens/Compose, kind, manifests/probes, PostgreSQL/migração, backup, carga/HPA e diagnóstico. A validação de carga moderada foi concluída; a observabilidade com Prometheus/Grafana está documentada nos capítulos 11 e 12.
+
+Prometheus/Grafana implantados em 16/10/2026: API 0.3.0 com cliente oficial de métricas, coleta por Pod, PVCs próprios, fonte/dashboard provisionados e duas regras locais. Quinze testes isolados, quatro testes HTTP no cluster e quatro verificações da observabilidade passaram. Carga de um minuto com alvo de 200 operações/s terminou sem erros. Módulo 7 permanece aberto para centralização de logs; notificações externas também são futuras.

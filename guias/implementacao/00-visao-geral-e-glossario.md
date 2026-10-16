@@ -222,7 +222,7 @@ PVC não é uma cópia de segurança. Excluir o cluster kind pode perder seu arm
 | Local-path provisioner | Provisiona armazenamento local para PVCs |
 | Metrics Server | Fornece amostras recentes de CPU/memória para `top` e HPA |
 
-Logs JSON registram eventos individuais. Request ID ajuda a correlacionar uma requisição. Prometheus coletará métricas ao longo do tempo; Grafana exibirá dashboards. **Prometheus/Grafana ainda não foram instalados.** Métricas HTTP serão uma interface separada das probes JSON de saúde.
+Logs JSON registram eventos individuais. Request ID ajuda a correlacionar uma requisição. Prometheus coleta métricas ao longo do tempo e Grafana exibe dashboards. Ambos estão implantados com PVCs próprios. Métricas HTTP usam `/metrics`, uma interface separada das probes JSON de saúde.
 
 Ingress e seu controlador também não estão implementados: Ingress declara regras HTTP e um controlador as executa. Nosso acesso atual continua por port-forward.
 

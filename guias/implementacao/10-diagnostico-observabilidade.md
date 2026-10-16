@@ -29,11 +29,11 @@ kubectl --context kind-infralab describe hpa/backend -n infralab
 
 `kubectl logs deployment/backend` consulta um Pod, não agrega automaticamente todos. Para um reinício, use `kubectl logs POD --previous -n infralab`. Jobs antigos Failed preservados para diagnóstico não significam que a aplicação atual esteja indisponível.
 
-## Próximo módulo
+## Conexão com os capítulos de observabilidade
 
-API já produz logs JSON com request ID, método, rota, status e duração. Nginx também produz logs JSON. Prometheus precisará de uma interface separada de métricas HTTP: contadores de requisições/erros e histogramas de latência, evitando labels de alta cardinalidade como ID de tarefa ou request ID.
+API já produz logs JSON com request ID, método, rota, status e duração. Nginx também produz logs JSON. Prometheus usa `/metrics` para contadores HTTP e histogramas de latência, sem labels de alta cardinalidade como ID de tarefa ou request ID.
 
-Grafana mostrará dashboards; centralização e correlação de logs serão tratadas depois. `/api/health/ready` continua sendo probe, não endpoint Prometheus. Este capítulo não instala Prometheus, Grafana ou Loki.
+Grafana mostra dashboards; centralização de logs com Loki continua futura. `/api/health/ready` permanece uma probe, não endpoint Prometheus. Siga [11 — Prometheus](11-prometheus.md) e [12 — Grafana](12-grafana.md) para implementar e estudar a coleta.
 
 Pergunta: por que request ID ajuda nos logs, mas é uma escolha ruim de label para uma métrica?
 

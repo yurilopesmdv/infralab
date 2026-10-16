@@ -24,9 +24,9 @@ kind create cluster --name infralab --image kindest/node:v1.35.8
 Construa imagens do código atual e carregue no nó:
 
 ```bash
-docker build --target runtime -t infralab-backend:0.2.1 backend
+docker build --target runtime -t infralab-backend:0.3.0 backend
 docker build -t infralab-frontend:0.1.0 frontend
-kind load docker-image infralab-backend:0.2.1 infralab-frontend:0.1.0 --name infralab
+kind load docker-image infralab-backend:0.3.0 infralab-frontend:0.1.0 --name infralab
 kubectl --context kind-infralab apply --dry-run=server -f k8s/namespace.yaml
 kubectl --context kind-infralab apply -f k8s/namespace.yaml
 ```

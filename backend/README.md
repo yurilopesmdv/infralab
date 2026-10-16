@@ -6,6 +6,8 @@ API HTTP nativa do Node.js, escrita em TypeScript e compilada para JavaScript. O
 |---|---|
 | [src/server.ts](src/server.ts) | Rotas, validação JSON, request ID, logs e encerramento controlado |
 | [src/store.ts](src/store.ts) | Seleção de SQLite/PostgreSQL e operações de tarefas |
+| [src/metrics.ts](src/metrics.ts) | Registro, métricas HTTP e normalização de labels |
+| [tests/metrics.test.mjs](tests/metrics.test.mjs) | Cardinalidade, exclusão de probes/scrapes e observação do histograma |
 | [src/postgres.ts](src/postgres.ts) | Schema e pool PostgreSQL, limitado a cinco conexões por processo |
 | [src/migrate-sqlite.ts](src/migrate-sqlite.ts) | Snapshot SQLite/WAL e migração transacional preservando IDs |
 | [Dockerfile](Dockerfile) | Etapas build, runtime e test, com usuário node |
@@ -19,7 +21,7 @@ API HTTP nativa do Node.js, escrita em TypeScript e compilada para JavaScript. O
 
 `DB_DRIVER` seleciona banco; por padrão é SQLite. `DATABASE_PATH` define o arquivo. Com PostgreSQL, `PGHOST`, `PGPORT`, `PGUSER`, `PGDATABASE` e `PGPASSWORD` configuram o cliente. No Kubernetes, as credenciais vêm do Secret; não grave senha no repositório.
 
-Liveness verifica o processo HTTP. Readiness verifica o banco selecionado, retornando 503 se indisponível. Logs incluem request ID, método, caminho, status e duração. SIGTERM encerra o servidor e depois o pool. Essas interfaces permanecem separadas das futuras métricas Prometheus.
+Liveness verifica o processo HTTP. Readiness verifica o banco selecionado, retornando 503 se indisponível. Logs incluem request ID, método, caminho, status e duração. SIGTERM encerra o servidor e depois o pool. Essas interfaces permanecem separadas de `/metrics`, que exporta métricas HTTP e de processo via `@prometheus-io/client`.
 
 ## Executar e validar
 

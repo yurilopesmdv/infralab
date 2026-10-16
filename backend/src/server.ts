@@ -1,6 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { createStore } from './store.js';
+import { metrics, observeHttp } from './metrics.js';
 
 const store = await createStore();
 
@@ -36,11 +37,18 @@ const server = createServer(async (req, res) => {
   const started = performance.now();
   const path = new URL(req.url ?? '/', 'http://localhost').pathname;
   res.setHeader('X-Request-Id', requestId);
+  res.on('finish', () => observeHttp(req.method ?? 'OTHER', path, res.statusCode, (performance.now() - started) / 1000));
   res.on('finish', () => console.log(JSON.stringify({
     level: 'info', requestId, method: req.method, path,
     status: res.statusCode, durationMs: Math.round(performance.now() - started)
   })));
   try {
+    if (req.method === 'GET' && path === '/metrics') {
+      const body = await metrics.metrics();
+      res.writeHead(200, { 'Content-Type': metrics.contentType });
+      res.end(body);
+      return;
+    }
     if (req.method === 'GET' && path === '/api/health/live') {
       return reply(res, 200, { status: 'ok' });
     }

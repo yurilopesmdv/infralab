@@ -9,6 +9,19 @@ const json = (method, body) => ({
   method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
 });
 
+test('endpoint separado exporta métricas Prometheus e mantém request ID', async () => {
+  const response = await fetch(process.env.METRICS_URL ?? 'http://backend:3000/metrics', {
+    signal: AbortSignal.timeout(10_000)
+  });
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('content-type'), /text\/plain/);
+  assert.match(response.headers.get('x-request-id'), /^[a-f0-9-]{36}$/);
+  const body = await response.text();
+  assert.match(body, /^# TYPE infralab_http_requests_total counter/m);
+  assert.match(body, /^# TYPE infralab_http_request_duration_seconds histogram/m);
+  assert.match(body, /^process_resident_memory_bytes /m);
+});
+
 test('frontend entrega HTML e JavaScript', async () => {
   const response = await request('/');
   assert.equal(response.status, 200);

@@ -21,11 +21,11 @@ O Pod precisa ter label `app: backend` e porta nomeada `http`. O Deployment usa 
 
 **Cluster atual já migrado:** não execute novamente a sequência SQLite. Consulte e valide os recursos abaixo.
 
-**Laboratório novo, com objetivo de repetir SQLite:** a imagem atual 0.2.1 ainda suporta SQLite; prepare uma cópia local do manifest em `k8s/legacy/backend-sqlite-deployment.yaml`, substituindo apenas a imagem por `infralab-backend:0.2.1`, mantendo uma réplica e `Recreate`. O arquivo legado referencia 0.1.0 histórica, que não deve ser reconstruída a partir do código atual sob a mesma versão. Aplique o PVC, depois sua cópia do Deployment e o Service. Não registre essa cópia se ela for somente para o exercício.
+**Laboratório novo, com objetivo de repetir SQLite:** a imagem atual 0.3.0 ainda suporta SQLite; prepare uma cópia local do manifest em `k8s/legacy/backend-sqlite-deployment.yaml`, substituindo apenas a imagem por `infralab-backend:0.3.0`, mantendo uma réplica e `Recreate`. O arquivo legado referencia 0.1.0 histórica, que não deve ser reconstruída a partir do código atual sob a mesma versão. Aplique o PVC, depois sua cópia do Deployment e o Service. Não registre essa cópia se ela for somente para o exercício.
 
 ```bash
 kubectl --context kind-infralab apply -f k8s/backend-pvc.yaml
-kubectl set image --local -f k8s/legacy/backend-sqlite-deployment.yaml backend=infralab-backend:0.2.1 -o yaml > /tmp/infralab-backend-sqlite.yaml
+kubectl set image --local -f k8s/legacy/backend-sqlite-deployment.yaml backend=infralab-backend:0.3.0 -o yaml > /tmp/infralab-backend-sqlite.yaml
 kubectl --context kind-infralab apply --dry-run=server -f /tmp/infralab-backend-sqlite.yaml
 kubectl --context kind-infralab apply -f /tmp/infralab-backend-sqlite.yaml
 kubectl --context kind-infralab apply -f k8s/backend-service.yaml
