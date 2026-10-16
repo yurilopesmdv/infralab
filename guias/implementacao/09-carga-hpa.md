@@ -1,6 +1,6 @@
 # 09 — Escala, carga limitada e HPA
 
-Estado ao encerrar a sessão: HPA/escala até dez validados; carga teve timeouts/502. O Nginx final reutiliza conexões e passou nos testes funcionais, mas seu reteste de carga ficou para amanhã. Os comandos abaixo são o roteiro de retomada, não uma declaração de capacidade já aprovada.
+HPA/escala até dez validados. Em 16/10/2026, duas execuções de 60 segundos com alvo de 200 operações/s passaram com zero erros, em estado estável e durante RollingUpdate. Esta validação é limitada à carga moderada do laboratório; resultados e procedimentos estão em [docs/ESCALABILIDADE.md](../../docs/ESCALABILIDADE.md).
 
 ## O que aprender e por quê
 

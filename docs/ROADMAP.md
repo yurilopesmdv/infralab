@@ -5,7 +5,7 @@
 - [x] 3. Aplicação: React/Vite, API HTTP Node.js/TypeScript, SQLite persistido, CRUD e Compose.
 - [ ] 4. Hardening: multi-stage, non-root, health checks, .dockerignore, recursos e secrets.
 - [x] 5. Kubernetes local: kind, kubectl, Pods, Deployments, Services, ConfigMaps e volumes.
-- [ ] 6. Migrar para PostgreSQL e escalar a API para 10 réplicas; HPA e testes de carga.
+- [x] 6. Migrar para PostgreSQL e escalar a API para 10 réplicas; HPA e testes de carga moderada.
 - [ ] 7. Observabilidade: Prometheus, Grafana, métricas HTTP, logs JSON, requestId e Loki.
 - [ ] 8. CI no GitHub Actions, scans, documentação e demonstração.
 
@@ -15,12 +15,12 @@ A aplicação via Compose está validada. A API usa HTTP nativo do Node.js, sem 
 
 Módulo 5 validado: cluster kind, imagens carregadas, Namespace, Deployments, probes, recursos, Services, PVC e ConfigMap Nginx. A persistência foi confirmada após substituir o Pod, e o fluxo completo foi testado no navegador via port-forward do frontend.
 
-Módulo 6 em andamento: PostgreSQL com StatefulSet/PVC e conexão SQL/persistência validados. Job sqlite-to-postgres-v2 concluiu a cópia de uma tarefa; API 0.2.1 está usando PostgreSQL, com três testes HTTP no cluster aprovados e 13 testes isolados. SQLite original preservado. Dez réplicas e HPA foram validados; reteste de carga ainda pendente. Observabilidade continua futura. Veja docs/POSTGRESQL.md e docs/ESCALABILIDADE.md.
+Módulo 6 concluído para o laboratório: PostgreSQL com StatefulSet/PVC, migração, escala até dez APIs e HPA validados. Em 16/10/2026, carga moderada com alvo de 200 operações/s passou sem erros por 60 segundos, tanto em estado estável quanto durante RollingUpdate. Três testes funcionais passaram e os dados originais permaneceram iguais. Isso não comprova capacidade máxima. SQLite original preservado; observabilidade continua futura. Veja docs/POSTGRESQL.md e docs/ESCALABILIDADE.md.
 
 Sequência acordada antes de Prometheus: validar escala gradual da API, teste de carga e HPA; depois criar `guias/implementacao/` com arquivos Markdown numerados. Os guias devem ensinar ambiente, arquitetura, frontend React/Nginx, API, SQLite/volumes, Compose/redes, kind, Deployments/Services/ConfigMaps/probes, PostgreSQL/Secret/PVC/migração e escalabilidade. Cada etapa terá comandos explicados, exemplos de código/YAML, validação, resultados esperados e ligação explícita com a etapa anterior e seguinte. Só depois iniciar Prometheus/Grafana. CI permanece uma etapa futura.
 
-Escala manual até dez e aumento/redução automática por HPA validados. Metrics Server 0.8.1 instalado; HPA entre duas e dez, alvo CPU 60%. RollingUpdate/preStop implementados. Carga detectou timeouts/502; Nginx agora reutiliza conexões, com sintaxe e três testes funcionais aprovados. Reteste de carga da configuração final fica para a próxima sessão, por solicitação do usuário. Módulo 6 permanece em andamento até essa validação; veja docs/ESCALABILIDADE.md. Prometheus/Grafana continuam futuros.
+Metrics Server 0.8.1 fornece CPU ao HPA, com duas a dez réplicas e alvo de 60%. Nginx usa conexões reutilizadas; API usa RollingUpdate e preStop. Carga moderada estável e durante atualização passou com zero erros e p95 de 2 ms em ambos os cenários. O diagnóstico das tentativas anteriores e o alcance da validação estão em docs/ESCALABILIDADE.md. Prometheus/Grafana continuam futuros.
 
 Proteção de dados validada: backup lógico PostgreSQL fora do kind, checksum e restauração em banco separado, com comparação de todas as tarefas. Banco original preservado. Backup local não substitui armazenamento externo, retenção e recuperação testada em produção. Veja docs/BACKUP-RESTAURACAO.md.
 
-Guias concluídos em `guias/implementacao/`: índice e dez capítulos numerados, cobrindo ambiente, API, React/Nginx, imagens/Compose, kind, manifests/probes, PostgreSQL/migração, backup, carga/HPA e diagnóstico. A pedido do usuário, a documentação foi finalizada antes do reteste de carga, que será retomado na próxima sessão, antes de Prometheus.
+Guias concluídos em `guias/implementacao/`: índice e dez capítulos numerados, cobrindo ambiente, API, React/Nginx, imagens/Compose, kind, manifests/probes, PostgreSQL/migração, backup, carga/HPA e diagnóstico. A validação de carga moderada foi concluída; o próximo módulo é observabilidade com Prometheus/Grafana.

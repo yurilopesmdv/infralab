@@ -237,7 +237,7 @@ kubectl --context kind-infralab top pods -n infralab
 
 `READY 2/2` no Deployment indica duas réplicas prontas. `READY 1/1` num Pod indica um container pronto dentre um declarado. `Running` sozinho não comprova readiness. `Bound` num PVC indica vínculo com PV. O HPA mostra valor atual/alvo e quantidade de réplicas.
 
-Estado ao encerrar esta etapa: duas APIs Ready, frontend e PostgreSQL Ready, HPA ativo entre duas e dez e PVCs preservados. Escala até dez foi observada, mas testes de carga detectaram timeouts/502. O Nginx final reutiliza conexões e passou nos testes funcionais; **o reteste de carga ainda está pendente**. Veja [resultados e retomada](../../docs/ESCALABILIDADE.md).
+A implantação mantém duas a dez APIs sob controle do HPA, frontend e PostgreSQL com armazenamento persistente. A validação de carga moderada também cobre a troca gradual dos Pods. Veja [resultados e limites](../../docs/ESCALABILIDADE.md).
 
 Para conferir o aprendizado: quem cria um Pod substituto quando o Deployment perde uma réplica? Qual componente guarda as tarefas: etcd ou PostgreSQL?
 

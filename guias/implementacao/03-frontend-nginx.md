@@ -44,7 +44,7 @@ proxy_set_header Connection "";
 proxy_connect_timeout 2s;
 ```
 
-Keepalive guarda até 16 conexões ociosas por worker para reutilização; não limita o total de conexões ativas. HTTP/1.1 e Connection vazio permitem essa reutilização. O Service continua selecionando Pods por conexão, portanto não espere distribuição uniforme por requisição. A mudança foi feita após erros em carga/retirada de Pods; o reteste sustentado ficou para a próxima sessão.
+Keepalive guarda até 16 conexões ociosas por worker para reutilização; não limita o total de conexões ativas. HTTP/1.1 e Connection vazio permitem essa reutilização. O Service continua selecionando Pods por conexão, portanto não espere distribuição uniforme por requisição.
 
 Ambos os arquivos também contêm tipos MIME, logs JSON e diretórios temporários compatíveis com usuário sem root.
 

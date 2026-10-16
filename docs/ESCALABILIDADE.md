@@ -79,12 +79,45 @@ Por isso o exemplo final limita também taxa. O Deployment acrescenta `preStop` 
 
 O manifesto local Metrics Server desativa validação TLS do kubelet para kind; consulte [a configuração](../k8s/metrics-server/README.md). Produção requer certificados válidos. Nginx, PostgreSQL e gerador podem limitar a carga antes das APIs. Conexões persistentes também podem concentrar tráfego em alguns Pods.
 
-## Ponto de retomada para a próxima sessão
+## Diagnóstico da sessão de 14/10/2026
 
 O Job `load-http-tscch`, com alvo de 200 operações/s durante RollingUpdate e preStop de cinco segundos, fez 7.893 leituras e teve 43 falhas (nove HTTP 502 e 34 timeouts). Logo, diminuir taxa e acrescentar preStop não resolveram sozinhos a falha. Logs Nginx confirmaram `Connection refused` ao conectar ao Service backend durante retirada de Pods, além de HTTP 499 quando o cliente desistiu.
 
 A configuração final do Nginx agora usa upstream `backend_api` apontando ao mesmo Service, `keepalive 16`, HTTP/1.1 e cabeçalho Connection vazio para reutilizar conexões; timeout de conexão de dois segundos torna esse erro mais rápido de identificar. Não alteramos kube-proxy ou configuração global. Referência: [keepalive Nginx](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive).
 
-Após a atualização do frontend, `nginx -t` e os três testes funcionais passaram. Estado final: duas APIs Ready, frontend e PostgreSQL Ready, HPA ativo e ambos os PVCs Bound. **O reteste de carga da configuração final ficou para a próxima sessão, a pedido do usuário. Não há validação de zero erros em carga sustentada com essa configuração.** Primeiro repetir o Job moderado; depois, se passar, medir escala/atualização e estresse com coleta por camada. Se falhar, investigar antes de aumentar recursos ou declarar capacidade.
+Após a atualização do frontend, `nginx -t` e os três testes funcionais passaram. O reteste foi concluído em 16/10/2026, conforme os resultados abaixo. O diagnóstico anterior permanece como histórico e não comprova uma causa única para todas as falhas.
 
-Prometheus/Grafana ainda não foram instalados. Os guias sequenciais serão concluídos antes de iniciar esse módulo.
+Prometheus/Grafana ainda não foram instalados. Os guias sequenciais estão disponíveis em `guias/implementacao/`.
+
+
+## Validação da configuração atual — 16/10/2026
+
+Dois Jobs separados executaram GET em `http://frontend:8080/api/tasks`, com alvo aproximado de 200 operações/s, concorrência máxima oito, duração de 60 segundos e timeout de cinco segundos. O Nginx em execução teve configuração e sintaxe conferidas, incluindo upstream keepalive e HTTP/1.1.
+
+| Cenário | Job | Leituras | Erros | Taxa efetiva | p50 | p95 | p99 |
+|---|---|---|---|---|---|---|---|
+| Duas APIs estáveis | load-http-zh89b | 11.799 | 0 | 196,65/s | 2 ms | 2 ms | 3 ms |
+| RollingUpdate da API | load-http-vgc4l | 11.782 | 0 | 196,37/s | 1 ms | 2 ms | 3 ms |
+
+Ambos os Jobs terminaram Complete. A taxa efetiva é próxima do alvo porque o script espaça operações por worker e considera o tempo de execução; não é um gerador de taxa exata. Percentis usam buckets de 1 ms.
+
+### Como reproduzir o cenário de atualização
+
+Depois de repetir a carga moderada sem atualização e conferir sucesso:
+
+```bash
+kubectl --context kind-infralab create -f k8s/load-job.yaml
+kubectl --context kind-infralab rollout restart deployment/backend -n infralab
+kubectl --context kind-infralab rollout status deployment/backend -n infralab --timeout=120s
+# Use o nome retornado pelo create:
+kubectl --context kind-infralab wait --for=condition=complete job/NOME -n infralab --timeout=120s
+kubectl --context kind-infralab logs job/NOME -n infralab
+```
+
+O restart altera o template do Deployment e substitui os Pods gradualmente. Não reinicia PostgreSQL nem remove volumes. Neste exercício, as leituras continuaram durante a troca dos Pods, com zero erros observados. Durante a carga, CPU ficou abaixo do alvo do HPA, que manteve duas réplicas; não aumentar réplicas nessas condições é comportamento esperado.
+
+### Validação funcional e dos dados
+
+Os três testes HTTP nativos do Node passaram após a carga, cobrindo frontend, saúde e CRUD. Esses testes removem somente sua tarefa temporária. A quantidade e o resumo dos campos id/title/done de todas as tarefas foram comparados antes e depois: uma tarefa original preservada, sem diferenças. Ambos os PVCs continuaram Bound; frontend, duas APIs e PostgreSQL permaneceram Ready. Jobs e logs anteriores foram preservados.
+
+O cenário moderado e a atualização gradual estão validados com a configuração atual. Isso não prova capacidade máxima, ausência universal de falhas, desempenho com mais dados ou aprovação da carga de estresse anterior. O laboratório continua em um único nó e com uma instância PostgreSQL. Não foram aumentados limites nem alteradas configurações globais.
