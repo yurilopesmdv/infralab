@@ -11,10 +11,13 @@ async function get(path) {
 }
 const query = expression => get(`/api/v1/query?${new URLSearchParams({ query: expression })}`);
 
-test('Prometheus descobre cada réplica Ready da API', async () => {
+test('Prometheus descobre réplicas da API sem duplicar targets', async () => {
   const { activeTargets } = await get('/api/v1/targets');
   const api = activeTargets.filter(target => target.labels.job === 'infralab-api');
-  assert.equal(api.length, Number(process.env.EXPECTED_API_REPLICAS ?? 2));
+  assert.ok(api.length > 0, 'Nenhum target da API');
+  if (process.env.EXPECTED_API_REPLICAS !== undefined) {
+    assert.equal(api.length, Number(process.env.EXPECTED_API_REPLICAS));
+  }
   assert.equal(new Set(api.map(target => target.labels.pod)).size, api.length);
   assert.ok(api.every(target => target.health === 'up' && !target.lastError));
 });

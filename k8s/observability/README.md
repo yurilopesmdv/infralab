@@ -11,7 +11,8 @@ Prometheus coleta cada Pod Ready da API; Grafana consulta Prometheus e carrega o
 | [grafana.yaml](grafana.yaml) | Deployment, PVC, Service e referência ao Secret |
 | [datasources.yaml](datasources.yaml) | Conecta Grafana ao Service Prometheus |
 | [dashboards.yaml](dashboards.yaml) | Configura carregamento de dashboards por arquivo |
-| [infralab.json](infralab.json) | Oito painéis HTTP e de processos Node.js |
+| [infralab.json](infralab.json) | Nove painéis HTTP e de processos Node.js |
+| [demo-job.yaml](demo-job.yaml) | Leituras por cinco minutos, executadas somente via create explícito |
 
 ## Execução
 

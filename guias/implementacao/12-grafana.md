@@ -62,10 +62,11 @@ Use-a somente no login; não a copie para documentação, prints ou comandos de 
 
 ## 4. Ler o dashboard
 
-Em Dashboards, abra a pasta **InfraLab** e o dashboard **InfraLab — HTTP e processos**. Comece com últimos 15 minutos e atualização de 15 segundos.
+Em Dashboards, abra a pasta **InfraLab** e o dashboard **InfraLab — HTTP e processos**. O dashboard abre com últimos 30 minutos e atualização de 15 segundos. A página inicial usa esse dashboard; para gerar tráfego e criar um painel próprio, siga [o capítulo 13](13-gerar-dados-e-criar-graficos.md).
 
 | Painel | O que responde | Como interpretar |
 |---|---|---|
+| Respostas acumuladas nas APIs | Quantas respostas os processos atuais contabilizaram? | Contadores reiniciam com os processos |
 | Requisições por segundo | Qual o tráfego médio recente? | Soma de rate dos contadores das réplicas |
 | Erros HTTP 5xx (%) | Que proporção de respostas da API falha no servidor? | 5xx dividido pelo total; 4xx aparece no painel de status |
 | Latência p95 | Até que tempo estão aproximadamente 95% das respostas? | Histograma agregado; unidade segundos |

@@ -50,6 +50,8 @@ spec:
             - name: http
               containerPort: 3000
           env:
+            - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
+              value: /var/lib/grafana/dashboards/infralab.json
             - name: GF_SECURITY_ADMIN_USER
               valueFrom:
                 secretKeyRef:

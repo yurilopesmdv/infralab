@@ -17,6 +17,7 @@ Execute comandos na raiz do repositório, no Ubuntu WSL. Estes capítulos explic
 | 10 | [Diagnóstico](10-diagnostico-observabilidade.md) | Operação e conexão com observabilidade |
 | 11 | [Prometheus](11-prometheus.md) | Métricas, coleta por Pod, PromQL e regras locais |
 | 12 | [Grafana](12-grafana.md) | Fonte de dados, dashboard e interpretação |
+| 13 | [Gerar dados e criar gráficos](13-gerar-dados-e-criar-graficos.md) | Carga de cinco minutos, navegação e painel próprio |
 
 Há dois caminhos no capítulo 06: reproduzir a aula histórica SQLite, ou implantar PostgreSQL diretamente num laboratório novo. Em um cluster já migrado, preserve o estado atual e use apenas validações. Não reaplique o Deployment SQLite para voltar à origem: novas escritas PostgreSQL não existem nele.
 

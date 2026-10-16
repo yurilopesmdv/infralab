@@ -199,9 +199,9 @@ kubectl --context kind-infralab port-forward -n infralab service/prometheus 9090
 kubectl --context kind-infralab port-forward -n infralab service/grafana 3002:3000
 ```
 
-Abra Prometheus em http://localhost:9090 e Grafana em http://localhost:3002. No Grafana, use `admin` e a senha privada de `.secrets/grafana-admin-password`; o arquivo é ignorado pelo Git. Abra **InfraLab → InfraLab — HTTP e processos** em Dashboards. A instalação inicial e o Secret estão explicados nos guias.
+Abra Prometheus em http://localhost:9090 e Grafana em http://localhost:3002. No Grafana, use `admin` e a senha privada de `.secrets/grafana-admin-password`; o arquivo é ignorado pelo Git. A página inicial abre o dashboard **InfraLab — HTTP e processos**, também disponível em Dashboards. Para produzir dados por cinco minutos: `kubectl --context kind-infralab create -f k8s/observability/demo-job.yaml`. A instalação inicial e o Secret estão explicados nos guias.
 
-Estude [11 — Prometheus](guias/implementacao/11-prometheus.md) e [12 — Grafana](guias/implementacao/12-grafana.md). Para checar a stack: `kubectl --context kind-infralab exec -i -n infralab deployment/backend -- node --input-type=module < scripts/verify-observability.mjs`. Regras de alerta são avaliadas localmente, sem envio de notificações.
+Estude [11 — Prometheus](guias/implementacao/11-prometheus.md), [12 — Grafana](guias/implementacao/12-grafana.md) e [13 — Gerar dados e criar gráficos](guias/implementacao/13-gerar-dados-e-criar-graficos.md). Para checar a stack: `kubectl --context kind-infralab exec -i -n infralab deployment/backend -- node --input-type=module < scripts/verify-observability.mjs`. Regras de alerta são avaliadas localmente, sem envio de notificações.
 
 ## Evolução e limites
 

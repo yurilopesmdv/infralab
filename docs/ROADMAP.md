@@ -26,3 +26,5 @@ Proteção de dados validada: backup lógico PostgreSQL fora do kind, checksum e
 Guias concluídos em `guias/implementacao/`: índice e dez capítulos numerados, cobrindo ambiente, API, React/Nginx, imagens/Compose, kind, manifests/probes, PostgreSQL/migração, backup, carga/HPA e diagnóstico. A validação de carga moderada foi concluída; a observabilidade com Prometheus/Grafana está documentada nos capítulos 11 e 12.
 
 Prometheus/Grafana implantados em 16/10/2026: API 0.3.0 com cliente oficial de métricas, coleta por Pod, PVCs próprios, fonte/dashboard provisionados e duas regras locais. Quinze testes isolados, quatro testes HTTP no cluster e quatro verificações da observabilidade passaram. Carga de um minuto com alvo de 200 operações/s terminou sem erros. Módulo 7 permanece aberto para centralização de logs; notificações externas também são futuras.
+
+Demonstração de observabilidade: dashboard inicial com nove painéis, janela padrão de 30 minutos e Job de leitura de cinco minutos. Capítulo 13 ensina geração de tráfego, status HTTP e criação de gráfico próprio pela interface. A verificação de targets aceita quantidade variável conforme o HPA.

@@ -6,7 +6,7 @@ API 0.3.0 expõe `/metrics` com o cliente oficial `@prometheus-io/client` 0.16.1
 
 Prometheus 3.15.0 descobre Pods Ready da API no namespace infralab, coleta a cada 15 segundos e mantém séries em PVC 2Gi. Retenção: dois dias ou 1GB de blocos, além de espaço necessário para WAL/dados recentes. RBAC permite somente leitura de Pods no namespace. Não coleta por um único endereço balanceado do Service.
 
-Grafana 13.2.4 usa PVC 1Gi, autenticação administrativa via Secret e provisionamento de fonte/dashboard por ConfigMaps. Dashboard InfraLab tem oito painéis: tráfego, proporção 5xx, p95, targets UP, tráfego por Pod, status HTTP, memória e CPU do processo. Ambos os processos executam sem root e têm recursos/probes configurados.
+Grafana 13.2.4 usa PVC 1Gi, autenticação administrativa via Secret e provisionamento de fonte/dashboard por ConfigMaps. Dashboard InfraLab tem nove painéis: respostas acumuladas, tráfego, proporção 5xx, p95, targets UP, tráfego por Pod, status HTTP, memória e CPU do processo. Ambos os processos executam sem root e têm recursos/probes configurados.
 
 O Metrics Server continua responsável pelas métricas usadas no HPA. Prometheus não modifica seu funcionamento. Grafana usa seu próprio SQLite interno para configuração; o banco de tarefas permanece PostgreSQL, separado.
 
@@ -17,7 +17,7 @@ O Metrics Server continua responsável pelas métricas usadas no HPA. Prometheus
 - `promtool` validou configuração e as duas regras locais.
 - Prometheus descobriu duas APIs UP e coletou seu próprio endpoint.
 - Quatro verificações Node confirmaram descoberta, amostras HTTP, regras e saúde Grafana.
-- A fonte Grafana consultou Prometheus com sucesso; API de provisionamento confirmou o dashboard com oito painéis. As oito consultas retornaram resultados válidos.
+- A fonte Grafana consultou Prometheus com sucesso; API de provisionamento confirmou inicialmente o dashboard com oito painéis, depois ampliado para nove. As oito consultas retornaram resultados válidos.
 - Job `load-http-tmd9b`: 11.797 leituras em 60 segundos, zero erros, 196,61 operações/s e p95 de 2 ms. Isso valida somente a carga moderada medida.
 - Novos PVCs Prometheus/Grafana Bound; volumes SQLite/PostgreSQL preservados.
 
@@ -42,3 +42,7 @@ Aprenda os conceitos e reproduza todos os passos em [11 — Prometheus](../guias
 Coleta, dashboard e avaliação de alertas são locais; não há Alertmanager, notificações, Loki, tracing ou alta disponibilidade. Retenção de métricas não substitui backup. Services/port-forward não são exposição pública de produção. CPU/memória do processo não são exatamente as métricas de container do Metrics Server. HTTP 502 do Nginx antes de chegar à API e requisições abortadas não entram nos contadores de respostas concluídas da API.
 
 Referências: [cliente Node](https://github.com/prometheus/client_js), [configuração Prometheus](https://prometheus.io/docs/prometheus/latest/configuration/configuration/), [provisionamento Grafana](https://grafana.com/docs/grafana/latest/administration/provisioning/).
+
+## Demonstração e navegação
+
+O dashboard atual tem nove painéis, incluindo respostas acumuladas dos processos atuais, e abre na página inicial com janela de 30 minutos. A carga demo é iniciada explicitamente com `kubectl create -f k8s/observability/demo-job.yaml --context kind-infralab`; não roda junto do apply da stack. Dura cinco minutos com alvo de 200 operações/s e não altera tarefas. Estude [o capítulo 13](../guias/implementacao/13-gerar-dados-e-criar-graficos.md) para executar a demonstração e construir um gráfico próprio.
