@@ -15,6 +15,6 @@ Os [guias sequenciais](../guias/implementacao/README.md) ensinam a implementaç�
 
 O estado atual usa PostgreSQL e HPA. Não interprete manifests/comandos históricos SQLite como uma orientação para trocar o banco atual. Em caso de divergência, confira estado atual, seção de retomada e arquivo real antes de executar mudanças.
 
-Prometheus/Grafana estão implantados; Loki e notificações externas continuam futuros.
+Prometheus/Grafana e Loki/Alloy estão implantados. Consulte [o guia de logs](../guias/implementacao/14-loki-e-logs-centralizados.md); notificações externas permanecem futuras.
 
 Voltar ao [projeto](../README.md) ou começar pelo [glossário](../guias/implementacao/00-visao-geral-e-glossario.md).

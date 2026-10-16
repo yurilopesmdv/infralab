@@ -1,0 +1,42 @@
+discovery.kubernetes "apps" {
+  role = "pod"
+  namespaces {
+    names = ["infralab"]
+  }
+}
+
+discovery.relabel "apps" {
+  targets = discovery.kubernetes.apps.targets
+  rule {
+    source_labels = ["__meta_kubernetes_pod_label_app"]
+    regex         = "backend|frontend"
+    action        = "keep"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_namespace"]
+    target_label  = "namespace"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_label_app"]
+    target_label  = "app"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_name"]
+    target_label  = "pod"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_container_name"]
+    target_label  = "container"
+  }
+}
+
+loki.source.kubernetes "apps" {
+  targets    = discovery.relabel.apps.output
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

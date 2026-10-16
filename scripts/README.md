@@ -19,3 +19,13 @@ Qualquer erro HTTP, timeout ou resposta inválida faz o gerador sair com código
 Backups podem conter dados sensíveis e ficam em `.backups/`, ignorada pelo Git. Não exclua volumes ou bancos para limpar testes sem decidir explicitamente o destino dos dados.
 
 Procedimentos completos: [backup](../docs/BACKUP-RESTAURACAO.md), [carga/HPA](../guias/implementacao/09-carga-hpa.md) e [resultados](../docs/ESCALABILIDADE.md). Voltar ao [projeto](../README.md).
+
+## Verificar logs centralizados
+
+`verify-logs.mjs` usa o test runner nativo do Node para verificar Loki e correlacionar uma leitura de tarefas entre Nginx/API, sem alterar o banco:
+
+```bash
+kubectl --context kind-infralab exec -i -n infralab deployment/backend -- node --input-type=module < scripts/verify-logs.mjs
+```
+
+Esperado: dois testes passam; o request ID aparece nos dois logs e permanece fora dos labels indexados. Consulte [o capítulo 14](../guias/implementacao/14-loki-e-logs-centralizados.md).

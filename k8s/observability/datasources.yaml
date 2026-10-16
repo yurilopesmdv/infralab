@@ -7,3 +7,17 @@ datasources:
     url: http://prometheus:9090
     isDefault: true
     editable: false
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: false
+    jsonData:
+      maxLines: 1000
+      derivedFields:
+        - name: RequestID
+          matcherRegex: '"requestId":"([a-f0-9-]+)"'
+          datasourceUid: loki
+          url: '{namespace="infralab"} | json | requestId="$${__value.raw}"'
+          urlDisplayLabel: Buscar request ID

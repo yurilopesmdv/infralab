@@ -102,7 +102,7 @@ No Prometheus, confira Targets UP antes de alterar consultas. Grafana ter `/api/
 
 ## Aprendizado e limites
 
-Dashboard ajuda a formular hipóteses; não prova sozinho a causa de um incidente. Combine métricas com logs JSON e request ID. Centralização com Loki, tracing e notificações externas não estão implementados. Acesso de produção precisa de TLS, usuários/permissões apropriados e gestão de segredos. O usuário admin local não representa o perfil de todos os usuários em produção.
+Dashboard ajuda a formular hipóteses; não prova sozinho a causa de um incidente. Combine métricas com logs JSON e request ID. A centralização com Loki/Alloy está no [capítulo 14](14-loki-e-logs-centralizados.md). Tracing e notificações externas permanecem futuros. Acesso de produção precisa de TLS, usuários/permissões apropriados e gestão de segredos. O usuário admin local não representa o perfil de todos os usuários em produção.
 
 Perguntas: o que investigar se Grafana estiver saudável mas os painéis não tiverem dados? Por que CPU do processo em cores não é a porcentagem mostrada pelo HPA?
 

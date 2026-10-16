@@ -2,7 +2,7 @@
   "uid": "infralab-http",
   "title": "InfraLab — HTTP e processos",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "editable": false,
   "tags": [
     "infralab"
@@ -359,6 +359,37 @@
         "tooltip": {
           "mode": "multi"
         }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Logs da API e Nginx",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 36,
+        "w": 24,
+        "h": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{namespace=\"infralab\",app=~\"backend|frontend\"}",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "sortOrder": "Descending"
       }
     }
   ]

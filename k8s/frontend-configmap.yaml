@@ -17,7 +17,7 @@ data:
       include /etc/nginx/mime.types;
       default_type application/octet-stream;
 
-      log_format json escape=json '{"method":"$request_method","path":"$uri","status":$status,"durationSeconds":$request_time}';
+      log_format json escape=json '{"method":"$request_method","path":"$uri","status":$status,"durationSeconds":$request_time,"requestId":"$upstream_http_x_request_id"}';
       access_log /dev/stdout json;
 
       client_body_temp_path /tmp/client_temp;

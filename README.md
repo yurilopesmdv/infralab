@@ -22,7 +22,7 @@ Todos os comandos dos guias partem da raiz deste repositório, no terminal Ubunt
 | PostgreSQL | StatefulSet/PVC, migração de uma tarefa e API 0.3.0 | Uma instância de banco, sem alta disponibilidade |
 | Proteção de dados | Backup fora do kind e restauração em banco separado | Cópia local; produção exige armazenamento externo |
 | Escala | Dez APIs Ready e HPA de duas a dez por CPU | Dimensionamento depende da carga e dos recursos disponíveis |
-| Observabilidade | Prometheus por Pod, métricas HTTP, dashboard Grafana e regras locais | Centralização de logs e notificações externas futuras |
+| Observabilidade | Prometheus por Pod, métricas HTTP, dashboard Grafana e regras locais | Logs Loki/Alloy validados; notificações externas futuras |
 
 ## Mapa das pastas
 
@@ -187,7 +187,7 @@ O backup PostgreSQL fica em `.backups/postgres/`, fora do kind e ignorado pelo G
 
 ## Prometheus e Grafana
 
-A API 0.3.0 expõe contadores HTTP e histograma de duração em `/metrics`. Prometheus descobre cada Pod Ready, coleta a cada 15 segundos e guarda séries em PVC. Grafana recebe fonte de dados e dashboard por arquivos: tráfego, respostas 5xx, p95, targets coletados e recursos dos processos. Logs JSON e request ID continuam disponíveis.
+A API 0.3.0 expõe contadores HTTP e histograma de duração em `/metrics`. Prometheus descobre cada Pod Ready, coleta a cada 15 segundos e guarda séries em PVC. Grafana recebe fonte de dados e dashboard por arquivos: tráfego, respostas 5xx, p95, targets coletados e recursos dos processos. Alloy coleta os logs do Nginx e da API pela API Kubernetes; Loki os persiste em PVC. Grafana oferece consulta por request ID e um décimo painel de logs.
 
 Em terminais separados, na raiz do projeto:
 
@@ -203,6 +203,8 @@ Abra Prometheus em http://localhost:9090 e Grafana em http://localhost:3002. No 
 
 Estude [11 — Prometheus](guias/implementacao/11-prometheus.md), [12 — Grafana](guias/implementacao/12-grafana.md) e [13 — Gerar dados e criar gráficos](guias/implementacao/13-gerar-dados-e-criar-graficos.md). Para checar a stack: `kubectl --context kind-infralab exec -i -n infralab deployment/backend -- node --input-type=module < scripts/verify-observability.mjs`. Regras de alerta são avaliadas localmente, sem envio de notificações.
 
+Para consultar logs: Grafana → Explore → fonte **Loki**. Use `{namespace="infralab",app="backend"}` e ajuste o período. Siga [14 — Loki e logs centralizados](guias/implementacao/14-loki-e-logs-centralizados.md) para configurar a coleta, filtrar JSON e correlacionar Nginx/API.
+
 ## Evolução e limites
 
 Este laboratório usa acesso local e não tem autenticação. O Compose mantém uma API com SQLite; o Kubernetes usa de duas a dez réplicas da API conectadas a uma instância PostgreSQL, todas no mesmo nó kind. Não é uma configuração pronta para exposição pública nem oferece alta disponibilidade do banco ou entre nós.
@@ -213,8 +215,7 @@ Etapas futuras, ainda não implementadas:
 2. **Aprofundar capacidade:** migração, dez réplicas e HPA local implementados; continuar medindo gargalos e orçamento de conexões com carga representativa.
 3. **Produção:** separar clientes de carga, distribuir nós e definir disponibilidade, segurança e recuperação conforme requisitos reais.
 4. **Ampliar monitoramento:** definir SLOs e encaminhar alertas para notificações externas.
-5. **Logs centralizados:** reunir logs JSON e correlacionar request IDs entre serviços, com Loki, ainda não instalado.
-6. **CI:** builds, testes e verificações de segurança no GitHub Actions.
+5. **CI:** builds, testes e verificações de segurança no GitHub Actions.
 
 Em produção também precisaremos de TLS, autenticação, gestão de segredos, backups testados e atualizações das imagens. Health checks são verificações pontuais; observabilidade ajuda a explicar o comportamento do sistema.
 
