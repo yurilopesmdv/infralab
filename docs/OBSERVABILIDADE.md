@@ -46,3 +46,5 @@ Referências: [cliente Node](https://github.com/prometheus/client_js), [configur
 ## Demonstração e navegação
 
 O dashboard atual tem nove painéis, incluindo respostas acumuladas dos processos atuais, e abre na página inicial com janela de 30 minutos. A carga demo é iniciada explicitamente com `kubectl create -f k8s/observability/demo-job.yaml --context kind-infralab`; não roda junto do apply da stack. Dura cinco minutos com alvo de 200 operações/s e não altera tarefas. Estude [o capítulo 13](../guias/implementacao/13-gerar-dados-e-criar-graficos.md) para executar a demonstração e construir um gráfico próprio.
+
+Validação da demonstração de cinco minutos: Job `observability-demo-l8t4f` terminou Complete, com 58.951 leituras em 300 segundos, zero erros, taxa de 196,5 operações/s e percentis p50 1 ms, p95 2 ms e p99 3 ms. As nove consultas e a página inicial do Grafana foram verificadas; a carga não alterou tarefas.
